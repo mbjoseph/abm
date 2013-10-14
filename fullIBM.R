@@ -4,64 +4,13 @@ fullIBM <- function(A=100, N=100, ERmin=-30, ERmax=30, Emin=-30, Emax=30,
                         sig.p = 5, gamma = .3, pI=.01,
                         network.pow=1, network.za=1){
   require(igraph)
-  E <- runif(A, Emin, Emax) # habitat patch environment type
-  pE <- runif(N, pEmin, pEmax) # within-host environmental conditions
-  mu.i <- runif(N, ERmin, ERmax) # optimum environment for hosts
-  mu.p <- runif(P, pERmin, pERmax) # parasite optima
-  sigma <- rep(sig, N) # runif(N, 1, 10) # # niche width
-  sigma.p <- rep(sig.p, P)
-  
-  Z <- array(dim=c(N)) # normalization constant
-  
-  # now calculating all elements of Z coefficient 
-  # (ensures all species have equal Pr(establishment) in regional pool)
-  for (i in 1:N){
-    integrand <- function(E) {
-      exp(-((E - mu.i[i]) ^ 2) / (2 * sigma[i] ^ 2))
-    }
-    res <- integrate(integrand, lower=ERmin, upper=ERmax)
-    Z[i] <- 1 / res$value
-  }
-  
-  # probability of establishment
-  Pcol <- array(dim=c(A, N))
-  for (i in 1:A){
-    for (j in 1:N){
-      Pcol[i, j] <- Z[j] * exp(-((E[i] - mu.i[j]) ^ 2) / (2*sigma[j] ^ 2))
-    }
-  }
-  
-  # calculate parasite Z
-  pZ <- rep(NA, P)
-  for (i in 1:P){
-    integrand <- function(pE) {
-      exp(-((pE - mu.p[i]) ^ 2) / (2 * sigma.p[i] ^ 2))
-    }
-    res <- integrate(integrand, lower=pERmin, upper=pERmax)
-    pZ[i] <- 1 / res$value
-  }
-  
-  # parasite probability of establishment
-  pPcol <- array(dim=c(N, P))
-  for (i in 1:N){
-    for (j in 1:P){
-      pPcol[i, j] <- pZ[j] * exp(-((pE[i] - mu.p[j]) ^ 2) / (2*sigma.p[j] ^ 2))
-    }
-  }
-  
-  # store host niche data
-  species <- rep(1:N, each=A)
-  E <- rep(E, N)
-  Pr.estab <- c(Pcol)
-  niche.d <- data.frame(species, E, Pr.estab)
-  niche.d <- niche.d[with(niche.d, order(species, E)),]
-  
-  # store parasite niche data
-  parasite.species <- rep(1:P, each=N)
-  pE <- rep(pE, P)
-  pPr.estab <- c(pPcol)
-  pniche.d <- data.frame(parasite.species, pE, pPr.estab)
-  pniche.d <- pniche.d[with(pniche.d, order(parasite.species, pE)),]
+
+  # initialize community and environmental traits
+  inits <- com_init(A=A, Emin=Emin, Emax=Emax, N=N, 
+                    pEmin=pEmin, pEmax=pEmax, P=P,
+                    ERmin=ERmin, ERmax=ERmax, 
+                    pERmin=pERmin, pERmax=pERmax,
+                    sig=sig, sig.p=sig.p)
   
   # initialize output objects
   state <- array(0, dim=c(timesteps, A, N))
@@ -144,7 +93,7 @@ fullIBM <- function(A=100, N=100, ERmin=-30, ERmax=30, Emin=-30, Emax=30,
                             pstate[t, Isites,])
             # above ifelse statement to account for only one I contact
             # Ipars is a vector with the sum of parsite contacts for each parasite species
-            ppestab <- pPcol[Ssp,]
+            ppestab <- inits$pPcol[Ssp,]
             # what is the probability of parasite establishment in that host species
             # adjust this probability to account for interspecific transmission?
             # bernoulli trial to see whether establishment possible
@@ -187,7 +136,7 @@ fullIBM <- function(A=100, N=100, ERmin=-30, ERmax=30, Emin=-30, Emax=30,
       # which parasite immigrants establish?
       # first determine which species occur in the empty sites
       Ssp <- apply(state[t, open.sites,], 1, which.max)
-      Pest <- immigration * pPcol[Ssp, ] # P(establishment) = I(attempting to colonize)*Pr(estab)
+      Pest <- immigration * inits$pPcol[Ssp, ] # P(establishment) = I(attempting to colonize)*Pr(estab)
       establishment <- array(rbinom(length(Pest), 1, c(Pest)),
                              dim=c(length(empty.hosts), P))
       # resolve conflicts arising from simultaneous colonization
@@ -245,7 +194,7 @@ fullIBM <- function(A=100, N=100, ERmin=-30, ERmax=30, Emin=-30, Emax=30,
       binom.mat <- ifelse(colonizing.offspring > 0, 1, 0)
       colonists <- array(rbinom(n = A * N, 
                                 size = c(colonizing.offspring),
-                                prob = c(binom.mat * Pcol)),
+                                prob = c(binom.mat * inits$Pcol)),
                          dim=c(A, N))
       
       # are there colonization conflicts (> 1 individual trying to colonize each site?)
@@ -276,7 +225,7 @@ fullIBM <- function(A=100, N=100, ERmin=-30, ERmax=30, Emin=-30, Emax=30,
       immigration <- array(rbinom(length(empty.sites)*N,
                                   1, I), dim=c(length(empty.sites), N))
       # which immigrants establish?
-      Pest <- immigration * Pcol[empty.sites, ]
+      Pest <- immigration * inits$Pcol[empty.sites, ]
       establishment <- array(rbinom(length(Pest), 1, c(Pest)),
                              dim=c(length(empty.sites), N))
       
@@ -309,5 +258,6 @@ fullIBM <- function(A=100, N=100, ERmin=-30, ERmax=30, Emin=-30, Emax=30,
   stopifnot(all(pstate[t,,] < 2))
   return(list(host.richness=host.richness, host.pr.occ = host.pr.occ, 
               state=state, pstate=pstate,
-              niche.d=niche.d, pniche.d=pniche.d, parasite.richness=parasite.richness))
+              niche.d=inits$niche.d, pniche.d=inits$pniche.d, 
+              parasite.richness=parasite.richness))
 }
