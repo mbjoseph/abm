@@ -64,7 +64,7 @@ fullIBM <- function(A=100, N=100, ERmin=-30, ERmax=30, Emin=-30, Emax=30,
       Ssites <- which(occupancy == 1)[Sindivs]
       Isites <- which(occupancy == 1)[Iindivs]
       # are there any S rows in the m matrix that contact I columns?
-      establishing.parasites <- array(0, dim=c(A, P))
+      transmitted <- array(0, dim=c(A, P))
       if(any(m[Sindivs,Iindivs] == 1)){
         # test whether parasite establishes for each S-I contact
         # for each susceptible host
@@ -100,29 +100,30 @@ fullIBM <- function(A=100, N=100, ERmin=-30, ERmax=30, Emin=-30, Emax=30,
             ptrial <- rbinom(sum(Ipars), Ipars, ppestab)
             # store potential establishment data in a host X parasite matrix, where the number
             # indicates the number of potential establishment events
-            establishing.parasites[Ssite, ] <- ptrial
+            transmitted[Ssite, ] <- ptrial
           }
         }
         
         # begin resolve function
         # if multiple parasites can establish in one host individual, resolve conflict
-        col.attempts <- apply(establishing.parasites, 1, sum)
-        if (any(col.attempts > 1)){ # if individuals are trying to simultaneously colonize
-          conflicts <- which(col.attempts > 1) # which empty sites have conflicts
-          for (k in conflicts){ # for each conflict
-            # how many of individuals of each species are attempting to simultaneously colonize?
-            attempting <- rep(1:P, times = establishing.parasites[k,])
-            # successful individual randomly selected from those attempting
-            successful <- sample(attempting, size=1)
-            new.row <- rep(0, length.out=P)
-            new.row[successful] <- 1
-            establishing.parasites[k,] <- new.row
-          }
-        }
+        #col.attempts <- apply(transmitted, 1, sum)
+        #if (any(col.attempts > 1)){ # if individuals are trying to simultaneously colonize
+        #  conflicts <- which(col.attempts > 1) # which empty sites have conflicts
+        #  for (k in conflicts){ # for each conflict
+        #    # how many of individuals of each species are attempting to simultaneously colonize?
+        #    attempting <- rep(1:P, times = transmitted[k,])
+        #    # successful individual randomly selected from those attempting
+        #    successful <- sample(attempting, size=1)
+        #    new.row <- rep(0, length.out=P)
+        #    new.row[successful] <- 1
+        #    transmitted[k,] <- new.row
+        #  }
+        #}
         # end resolve function
+        resolution <- resolve(transmitted, P)
         
         # add establishing parasites
-        pstate[t,,] <- pstate[t,,] + establishing.parasites
+        pstate[t,,] <- pstate[t,,] + resolution
       } 
     }
     
@@ -140,28 +141,29 @@ fullIBM <- function(A=100, N=100, ERmin=-30, ERmax=30, Emin=-30, Emax=30,
       # which parasite immigrants establish?
       # first determine which species occur in the empty sites
       Ssp <- apply(state[t, open.sites,], 1, which.max)
-      Pest <- immigration * inits$pPcol[Ssp, ] # P(establishment) = I(attempting to colonize)*Pr(estab)
-      establishment <- array(rbinom(length(Pest), 1, c(Pest)),
+      Pest <- immigration * inits$pPcol[Ssp, ] # P(symbiont.colonization) = I(attempting to colonize)*Pr(estab)
+      symbiont.colonization <- array(rbinom(length(Pest), 1, c(Pest)),
                              dim=c(length(empty.hosts), P))
       
       # resolve function
       # resolve conflicts arising from simultaneous colonization
-      col.attempts <- apply(establishment, 1, sum)
-      if (any(col.attempts > 1)){ # if individuals are trying to simultaneously colonize
-        conflicts <- which(col.attempts > 1) # which empty sites have conflicts
-        for (k in conflicts){ # for each conflict
+      #col.attempts <- apply(symbiont.colonization, 1, sum)
+      #if (any(col.attempts > 1)){ # if individuals are trying to simultaneously colonize
+      #  conflicts <- which(col.attempts > 1) # which empty sites have conflicts
+      #  for (k in conflicts){ # for each conflict
           # how many of individuals of each species are attempting to simultaneously colonize?
-          attempting <- rep(1:P, times = establishment[k,])
+      #    attempting <- rep(1:P, times = symbiont.colonization[k,])
           # successful individual randomly selected from those attempting
-          successful <- sample(attempting, size=1)
-          new.row <- rep(0, length.out=P)
-          new.row[successful] <- 1
-          establishment[k,] <- new.row
-        }
-      }
+      #    successful <- sample(attempting, size=1)
+      #    new.row <- rep(0, length.out=P)
+      #    new.row[successful] <- 1
+      #    symbiont.colonization[k,] <- new.row
+      #  }
+      #}
+      resolution <- resolve(symbiont.colonization, P)
       
       # add establishing immigrants
-      pstate[t, empty.hosts, ] <- pstate[t, empty.hosts,] + establishment
+      pstate[t, empty.hosts, ] <- pstate[t, empty.hosts,] + resolution
     }
     
     # HOST RECOVERY / PARASITE DEATH #
@@ -206,24 +208,25 @@ fullIBM <- function(A=100, N=100, ERmin=-30, ERmax=30, Emin=-30, Emax=30,
       
       # resolve function
       # are there colonization conflicts (> 1 individual trying to colonize each site?)
-      attempting <- apply(colonists, 1, sum) # number indiv. attempting to colonize each site
-      if (any(attempting > 1)){
+      #attempting <- apply(colonists, 1, sum) # number indiv. attempting to colonize each site
+      #if (any(attempting > 1)){
         # resolve colonization conflicts
-        conflicts <- which(attempting > 1) # which sites have conflicts
-        for (k in conflicts){ # for each conflict
+      #  conflicts <- which(attempting > 1) # which sites have conflicts
+      #  for (k in conflicts){ # for each conflict
           # how many of individuals of each species are attempting to simultaneously colonize?
-          n.attempting <- rep(1:N, times = colonists[k,])
+      #    n.attempting <- rep(1:N, times = colonists[k,])
           # randomly select one successful from those attempting
-          successful <- sample(n.attempting, size=1)
-          new.row <- rep(0, length.out=N)
-          new.row[successful] <- 1
-          colonists[k,] <- new.row # individual becomes the only colonist
-        }
-      }
+      #    successful <- sample(n.attempting, size=1)
+      #    new.row <- rep(0, length.out=N)
+      #    new.row[successful] <- 1
+      #    colonists[k,] <- new.row # individual becomes the only colonist
+      #  }
+      #}
       # resolve end
+      resolution <- resolve(colonists, N)
       
       # add successful colonists
-      state[t,,] <- state[t,,] + colonists
+      state[t,,] <- state[t,,] + resolution
     } 
     # end of offspring colonization
     
@@ -241,26 +244,26 @@ fullIBM <- function(A=100, N=100, ERmin=-30, ERmax=30, Emin=-30, Emax=30,
       
       # resolve function
       # resolve conflicts arising from simultaneous colonization
-      col.attempts <- apply(establishment, 1, sum)
-      if (any(col.attempts > 1)){ # if individuals are trying to simultaneously colonize
-        conflicts <- which(col.attempts > 1) # which empty sites have conflicts
-        for (k in conflicts){ # for each conflict
+      #col.attempts <- apply(establishment, 1, sum)
+      #if (any(col.attempts > 1)){ # if individuals are trying to simultaneously colonize
+      #  conflicts <- which(col.attempts > 1) # which empty sites have conflicts
+      #  for (k in conflicts){ # for each conflict
           # how many of individuals of each species are attempting to simultaneously colonize?
-          attempting <- rep(1:N, times = establishment[k,])
+      #    attempting <- rep(1:N, times = establishment[k,])
           # successful individual randomly selected from those attempting
-          successful <- sample(attempting, size=1)
-          new.row <- rep(0, length.out=N)
-          new.row[successful] <- 1
-          establishment[k,] <- new.row
-        }
-      }
+      #    successful <- sample(attempting, size=1)
+      #    new.row <- rep(0, length.out=N)
+      #    new.row[successful] <- 1
+      #    establishment[k,] <- new.row
+      #  }
+      #}
       # end resolve
+      resolution <- resolve(establishment, N)
       
       # add establishing immigrants
-      state[t, empty.sites, ] <- state[t, empty.sites,] + establishment
+      state[t, empty.sites, ] <- state[t, empty.sites,] + resolution
     }
 
-    
     host.richness[t] <- sum(apply(state[t,,], 2, max))
     host.pr.occ[t] <- length(which(state[t,,] == 1)) / A
     parasite.richness[t] <- sum(apply(pstate[t,,], 2, max))
