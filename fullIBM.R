@@ -103,6 +103,8 @@ fullIBM <- function(A=100, N=100, ERmin=-30, ERmax=30, Emin=-30, Emax=30,
             establishing.parasites[Ssite, ] <- ptrial
           }
         }
+        
+        # begin resolve function
         # if multiple parasites can establish in one host individual, resolve conflict
         col.attempts <- apply(establishing.parasites, 1, sum)
         if (any(col.attempts > 1)){ # if individuals are trying to simultaneously colonize
@@ -117,6 +119,8 @@ fullIBM <- function(A=100, N=100, ERmin=-30, ERmax=30, Emin=-30, Emax=30,
             establishing.parasites[k,] <- new.row
           }
         }
+        # end resolve function
+        
         # add establishing parasites
         pstate[t,,] <- pstate[t,,] + establishing.parasites
       } 
@@ -139,6 +143,8 @@ fullIBM <- function(A=100, N=100, ERmin=-30, ERmax=30, Emin=-30, Emax=30,
       Pest <- immigration * inits$pPcol[Ssp, ] # P(establishment) = I(attempting to colonize)*Pr(estab)
       establishment <- array(rbinom(length(Pest), 1, c(Pest)),
                              dim=c(length(empty.hosts), P))
+      
+      # resolve function
       # resolve conflicts arising from simultaneous colonization
       col.attempts <- apply(establishment, 1, sum)
       if (any(col.attempts > 1)){ # if individuals are trying to simultaneously colonize
@@ -153,6 +159,7 @@ fullIBM <- function(A=100, N=100, ERmin=-30, ERmax=30, Emin=-30, Emax=30,
           establishment[k,] <- new.row
         }
       }
+      
       # add establishing immigrants
       pstate[t, empty.hosts, ] <- pstate[t, empty.hosts,] + establishment
     }
@@ -197,6 +204,7 @@ fullIBM <- function(A=100, N=100, ERmin=-30, ERmax=30, Emin=-30, Emax=30,
                                 prob = c(binom.mat * inits$Pcol)),
                          dim=c(A, N))
       
+      # resolve function
       # are there colonization conflicts (> 1 individual trying to colonize each site?)
       attempting <- apply(colonists, 1, sum) # number indiv. attempting to colonize each site
       if (any(attempting > 1)){
@@ -212,6 +220,8 @@ fullIBM <- function(A=100, N=100, ERmin=-30, ERmax=30, Emin=-30, Emax=30,
           colonists[k,] <- new.row # individual becomes the only colonist
         }
       }
+      # resolve end
+      
       # add successful colonists
       state[t,,] <- state[t,,] + colonists
     } 
@@ -229,6 +239,7 @@ fullIBM <- function(A=100, N=100, ERmin=-30, ERmax=30, Emin=-30, Emax=30,
       establishment <- array(rbinom(length(Pest), 1, c(Pest)),
                              dim=c(length(empty.sites), N))
       
+      # resolve function
       # resolve conflicts arising from simultaneous colonization
       col.attempts <- apply(establishment, 1, sum)
       if (any(col.attempts > 1)){ # if individuals are trying to simultaneously colonize
@@ -243,6 +254,8 @@ fullIBM <- function(A=100, N=100, ERmin=-30, ERmax=30, Emin=-30, Emax=30,
           establishment[k,] <- new.row
         }
       }
+      # end resolve
+      
       # add establishing immigrants
       state[t, empty.sites, ] <- state[t, empty.sites,] + establishment
     }

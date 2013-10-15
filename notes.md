@@ -3,7 +3,7 @@ abm notes
 
 To do 
 -----
-1. Break up the original huge function into sensible, discrete subfunctions     
+### Break up the original huge function into sensible, discrete subfunctions     
 **Current order of operations**
 - Define environmental parameters (E values)
 - Define host community traits (w/in host E vals, niche parameters)
@@ -20,13 +20,13 @@ To do
 - Host immigrants colonize empty sites
 
 
-**Sensible subfunctions**
+**Sensible subfunctions**  
 1) com_init(): define environment, host com traits, parasite com traits  
 2) transmit(): parasites transmit  
-3) resolve(): resolve simultaneous colonization conflicts  
-4) rain_parasites(): parasite colonization from regional pool
-5) rain_hosts(): host colonization from regional pool
-6) host_lifecycle(): birth/death/recovery process for hosts
+3) resolve(): resolve simultaneous colonization conflicts. args = attempting matrix, number of species (N or P)
+4) rain_parasites(): parasite colonization from regional pool  
+5) rain_hosts(): host colonization from regional pool  
+6) host_lifecycle(): birth/death/recovery process for hosts  
 7) hosts_colonize(): newborn and immigrating hosts colonize empty sites
 
 2. Remove priority effects for breeders over new immigrating colonists
