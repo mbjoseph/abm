@@ -29,15 +29,8 @@ fullIBM <- function(A=100, N=100, ERmin=-30, ERmax=30, Emin=-30, Emax=30,
   for (t in 2:timesteps){
     state[t,,] <- state[t-1,,]
     pstate[t,,] <- pstate[t-1,,]
-    
-    
-    # PARASITES DO THEIR THING # 
+
     # PARASITE TRANSMISSION WITHIN COMMUNITY #
-    # for simplicity, assume contact rates are poisson distributed and density independent
-    # determine number of contacts
-    # for each host, determine how many other hosts were contacted
-    #contacts <- array(rpois(A*N, c(state[t,,])*exp.contact), dim=c(A, N))
-    # randomly determine which individuals are contacted (homogeneous mixing)
     occupancy <- apply(state[t,,], 1, max)
     n.ind <- sum(occupancy)
     
@@ -58,7 +51,6 @@ fullIBM <- function(A=100, N=100, ERmin=-30, ERmax=30, Emin=-30, Emax=30,
     Iindivs <- ifelse(class(pstate[t, which(occupancy==1),]) == "array", 
                       which(apply(pstate[t, which(occupancy==1),], 1,sum) > 0),
                       ifelse(sum(pstate[t, which(occupancy==1),]) == 0, 0, 1))
-    #Iindivs <- which(apply(pstate[t, which(occupancy==1),], 1, sum) > 0)
     if (sum(Iindivs) > 0){ # if there are infectious individuals
       # go through transmission cycle
       Ssites <- which(occupancy == 1)[Sindivs]
@@ -69,36 +61,26 @@ fullIBM <- function(A=100, N=100, ERmin=-30, ERmax=30, Emin=-30, Emax=30,
         # test whether parasite establishes for each S-I contact
         # for each susceptible host
         for (s in Sindivs){
-          # what is the relevant matrix? m[s, Iindivs]
           contacts <- sum(m[s, Iindivs]) # how many contacts with infectious individuals?
           if(contacts == 0){
             next
           }else{
-            # which site is that host in?
-            Ssite <- which(occupancy == 1)[s]
-            # which host species is susceptible
-            Ssp <- which(state[t, Ssite,] == 1)
-            # How many contacts occur with individuals infectious with different parasite spp?
-            # which individuals in the m matrix are encountered?
-            minds <- which(m[s, ] == 1)
-            # which of these are infectious?
-            i.minds <- minds[minds %in% Iindivs]
-            # what sites do they occur in?
-            Isites <- which(occupancy == 1)[i.minds]
-            # what host species are they?
-            Isp <- which(state[t, Isites, ] == 1)
+            Ssite <- which(occupancy == 1)[s] # which site is that host in?
+            Ssp <- which(state[t, Ssite,] == 1) # which host species is susceptible
+            minds <- which(m[s, ] == 1) # which individuals in the m matrix are encountered?
+            i.minds <- minds[minds %in% Iindivs] # which of these are infectious?
+            Isites <- which(occupancy == 1)[i.minds] # what sites do they occur in?
+            Isp <- which(state[t, Isites, ] == 1) # what host species are they?
             # what parasites do they have?
             Ipars <- ifelse(class(pstate[t, Isites,]) == "matrix", 
                             apply(pstate[t, Isites,], 2, sum),
                             pstate[t, Isites,])
             # above ifelse statement to account for only one I contact
             # Ipars is a vector with the sum of parsite contacts for each parasite species
-            ppestab <- inits$pPcol[Ssp,]
-            # what is the probability of parasite establishment in that host species
-            # adjust this probability to account for interspecific transmission?
-            # bernoulli trial to see whether establishment possible
-            ptrial <- rbinom(sum(Ipars), Ipars, ppestab)
-            # store potential establishment data in a host X parasite matrix, where the number
+            ppestab <- inits$pPcol[Ssp,] # probability of parasite establishment in that host species
+            # adjust this probability to account for interspecific transmission? built-in
+            ptrial <- rbinom(sum(Ipars), Ipars, ppestab) # is establishment possible
+            # store potential transmission data in a host X symbiont matrix, where number
             # indicates the number of potential establishment events
             transmitted[Ssite, ] <- ptrial
           }
@@ -109,10 +91,12 @@ fullIBM <- function(A=100, N=100, ERmin=-30, ERmax=30, Emin=-30, Emax=30,
         pstate[t,,] <- pstate[t,,] + resolution
       } 
     }
+
+    # SYMBIONT INVASION FROM REGIONAL POOL #
+    # call to rain_symbionts()
+    # args: sites occupied by hosts, P, pI, t, pPcol (inits$pPcol), 
     
-    # otherwise, move on to parasite colonization from regional pool
     
-    # PARASITE INVASION FROM REGIONAL POOL #
     poccupancy <- apply(pstate[t,,], 1, max)
     occupancy <- apply(state[t,,], 1, max)
     open.sites <- which(occupancy - poccupancy == 1)
@@ -127,6 +111,8 @@ fullIBM <- function(A=100, N=100, ERmin=-30, ERmax=30, Emin=-30, Emax=30,
       Pest <- immigration * inits$pPcol[Ssp, ] # P(symbiont.colonization) = I(attempting to colonize)*Pr(estab)
       symbiont.colonization <- array(rbinom(length(Pest), 1, c(Pest)),
                              dim=c(length(empty.hosts), P))
+      
+      # end rain_symbionts()
       
       resolution <- resolve(symbiont.colonization, P)
       
