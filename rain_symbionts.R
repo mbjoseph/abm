@@ -20,8 +20,8 @@ rain_symbionts <- function(state, pstate, A, P, pI, t, pPcol, static=FALSE){
       Ssp <- apply(matrix(state[t, open.sites,], nrow=length(open.sites)), 1, which.max)
     }
     Pest <- immigration * pPcol[Ssp, ] # P(symbiont.colonization) = I(attempting to colonize)*Pr(estab)
-    symbiont.colonization[empty.hosts, ] <- array(rbinom(length(Pest), 1, c(Pest)),
-                                   dim=c(length(empty.hosts), P))
+    stopifnot(Pest <= 1)
+    symbiont.colonization[empty.hosts, ] <- array(rbinom(length(Pest), 1, c(Pest)), dim=c(length(empty.hosts), P))
   } 
   return(symbiont.colonization)
 }
