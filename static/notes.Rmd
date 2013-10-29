@@ -1,0 +1,9 @@
+Static hosts model notes
+========================================================
+
+Rather than starting with the full landscape-host-symbiont model, start with just a host-symbiont model, assuming static host populations (fixed abundance& community composition).
+
+Work: 
+1) implement static host formulation
+2) estimate beta at each time step
+3) estimate R0 for each pathogen

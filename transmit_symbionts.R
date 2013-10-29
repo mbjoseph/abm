@@ -1,8 +1,12 @@
 # transmit_symbionts allows local transmission of symbionts
-transmit_symbionts <- function(t, state, pstate, network.pow, network.za){
+transmit_symbionts <- function(t, state, pstate, network.pow, network.za, static=FALSE){
   A <- dim(pstate)[2]
   P <- dim(pstate)[3]
-  occupancy <- apply(state[t,,], 1, max)
+  if (static == TRUE){
+    occupancy <- apply(state, 1, max)
+  } else {
+    occupancy <- apply(state[t,,], 1, max)
+  }
   n.ind <- sum(occupancy)
   
   # build scale-free undirected contact network with Barabasi-Albert algorithm

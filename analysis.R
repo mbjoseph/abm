@@ -23,5 +23,33 @@ ggplot(output$pniche.d) +
 
 x <- -100:100
 y <- -x^2
+y <- scale(y)
 par(mgp=c(1,1,0))
-plot(x, y, "l", yaxt="n", xaxt="n", ylab="Species richness", xlab="Habitat heterogeneity", main="Habitat area-heterogeneity trade-off")
+plot(x, y, "l", yaxt="n", xaxt="n",
+     ylab="Species richness", xlab="Habitat heterogeneity", 
+     main="Habitat area-heterogeneity trade-off")
+z <- - y^2
+z <- scale(z)
+range01 <- function(x){(x-min(x))/(max(x)-min(x))}
+z <- range01(z) ^ 2
+require(scatterplot3d)
+scatterplot3d(x, y, z, highlight.3d=T, type="h", 
+              #main="Hypothetical richness relationship", 
+              xlab="Habitat heterogeneity", 
+              ylab="Host diveristy", 
+              zlab="Symbiont diversity", 
+              tick.marks=F, 
+              label.tick.marks=F)
+library(lattice)
+cloud(z~x*y,
+      distance=.1,
+      type=c("h", "p"),
+      main="Dual-trade-off diversity relationships",
+      xlab="Habitat heterogeneity", 
+      ylab="Hosts", 
+      zlab="Symbionts", 
+      shade=T, 
+      pch=1,
+      pch.col="black",
+      aspect = c(1.2, 1))
+
