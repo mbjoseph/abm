@@ -3,14 +3,16 @@ staticIBM <- function(timesteps=500,
                       Y=5, modalO=2, z=0.1,
                       P=100, pEmin=-30, pEmax=30, pERmin=-30, pERmax=30,
                       sig.p = 5, gamma = .3, pI=.01,
-                      network.pow=1, network.za=1){
+                      network.pow=1, network.za=1,
+                      A=NULL, N=NULL, prest=FALSE){
   require(igraph)
   
   # initialize host and symbiont communities
   inits <- static_init(Y=Y, modalO=modalO, z=z,
-    pEmin=pEmin, pEmax=pEmax, P=P, 
+    pEmin=pEmin, pEmax=pEmax, P=P, prest=prest, 
                        pERmin=pERmin, pERmax=pERmax,
-                       sig.p=sig.p)
+                       sig.p=sig.p, 
+                       A=A, N=N)
   
   # initialize output objects
   state <- inits$state

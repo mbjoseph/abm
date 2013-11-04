@@ -1,20 +1,43 @@
-static_init <- function(Y=5, modalO=2, z=0.1, 
+static_init <- function(Y=5, modalO=2, z=0.1, prest=FALSE,
                         pEmin=pEmin, pEmax=pEmax, P=P, 
                         pERmin=pERmin, pERmax=pERmax,
-                        sig.p=sig.p){
+                        sig.p=sig.p, N=NULL, A=NULL){
 
   ## Define host community
-  octaves <- 1:10
-  s <- Y*exp(-(z*(octaves-modalO)^2)) 
-  s <- round(s)
-  plog2 <- 2^octaves
-  abund <- rep(plog2, s)
-  abund <- sort(abund, decreasing=T)
-  rank <- rep(octaves, s)
-  rank <- sort(rank, decreasing=T)
-  N <- length(abund)
-  A <- sum(abund)
-  preston <- data.frame(s, octaves, plog2)
+  if (prest == TRUE){
+    octaves <- 1:10
+    s <- Y*exp(-(z*(octaves-modalO)^2)) 
+    s <- round(s)
+    plog2 <- 2^octaves
+    abund <- rep(plog2, s)
+    abund <- sort(abund, decreasing=T)
+    rank <- rep(octaves, s)
+    rank <- sort(rank, decreasing=T)
+    N <- length(abund)
+    A <- sum(abund)
+  } else {
+    n.each <- A / N
+    intn <- as.integer(n.each)
+    abund <- rep(intn, N)
+    if (n.each != intn){
+      warning("Decimal abundances were adjusted to be integers")
+      # adjust abundances to reach final target if necessary
+      add.order <- sample(1:N)
+      differ <- N - sum(n.each)
+      if (differ > 0){ # add individuals until they're equal
+        for (i in 1:differ){
+          abund[add.order[i]] <- abund[add.order[i]] + 1
+        }
+      }else{
+        if (differ < 0){
+          for (i in 1:differ){
+            abund[add.order[i]] <- abund[add.order[i]] - 1
+          }
+        }
+      }
+    }
+    stopifnot(sum(abund) == A)
+  }
   
   # put into array
   hosts <- array(0, dim=c(A, N))
@@ -71,6 +94,6 @@ static_init <- function(Y=5, modalO=2, z=0.1,
   pPr.estab <- c(pPcol)
   pniche.d <- data.frame(parasite.species, pE, pPr.estab)
   pniche.d <- pniche.d[with(pniche.d, order(parasite.species, pE)),]
-  return(list(preston=preston, pPcol=pPcol, pniche.d=pniche.d, 
+  return(list(pPcol=pPcol, pniche.d=pniche.d, 
               abund=abund, rank=rank, N=N, A=A, state=hosts))
 }

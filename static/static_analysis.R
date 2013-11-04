@@ -8,7 +8,7 @@ source("static/transmit.R")
 source("static/staticIBM.R")
 output <- staticIBM(Y = 5, P=50, sig.p=1, gamma=0.1, network.pow = 1, 
                     pEmin = -5, pEmax = 5, pERmin=-5, pERmax=5, pI=.01, 
-                    timesteps=100)
+                    timesteps=100, A=100, N=10)
 str(output)
 
 plot(output$parasite.richness, type="l", lty=2, col="red",
