@@ -23,15 +23,16 @@ static_init <- function(Y=5, modalO=2, z=0.1, prest=FALSE,
       warning("Decimal abundances were adjusted to be integers")
       # adjust abundances to reach final target if necessary
       add.order <- sample(1:N)
-      differ <- N - sum(n.each)
+      differ <- A - sum(abund)
+      sequ <- rep(add.order, length.out=abs(differ))
       if (differ > 0){ # add individuals until they're equal
-        for (i in 1:differ){
-          abund[add.order[i]] <- abund[add.order[i]] + 1
+        for (i in sequ){
+          abund[i] <- abund[i] + 1
         }
       }else{
         if (differ < 0){
-          for (i in 1:differ){
-            abund[add.order[i]] <- abund[add.order[i]] - 1
+          for (i in sequ){
+            abund[i] <- abund[i] - 1
           }
         }
       }
@@ -90,10 +91,10 @@ static_init <- function(Y=5, modalO=2, z=0.1, prest=FALSE,
   
   # store parasite niche data
   parasite.species <- rep(1:P, each=N)
-  pE <- rep(pE, P)
+  pEr <- rep(pE, P)
   pPr.estab <- c(pPcol)
-  pniche.d <- data.frame(parasite.species, pE, pPr.estab)
-  pniche.d <- pniche.d[with(pniche.d, order(parasite.species, pE)),]
-  return(list(pPcol=pPcol, pniche.d=pniche.d, 
+  pniche.d <- data.frame(parasite.species, pEr, pPr.estab)
+  pniche.d <- pniche.d[with(pniche.d, order(parasite.species, pEr)),]
+  return(list(pPcol=pPcol, pniche.d=pniche.d, pE = pE,
               abund=abund, rank=rank, N=N, A=A, state=hosts))
 }

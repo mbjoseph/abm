@@ -1,6 +1,6 @@
 # transmit_symbionts allows local transmission of symbionts
 transmit <- function(t, state, pstate, network.pow, 
-                     network.za, static=FALSE, pPcol){
+                     network.za, static=FALSE, pPcol, cij){
   A <- dim(pstate)[2]
   P <- dim(pstate)[3]
   if (static == TRUE){
@@ -17,6 +17,21 @@ transmit <- function(t, state, pstate, network.pow,
   m <- m[new.order,new.order]
   #plot(graph.adjacency(m)) # visualize the contact network
   
+  # determine which of the contacts are between conspecifics & heterospecifics
+  m.species <- apply(state, 1, which.max)
+  inter.matrix <- array(NA, dim=c(A, A))
+  for (i in 1:A){
+    row.spec <- m.species[i]
+    col.species <- m.species[1:A]
+    inter.matrix[i, ] <- ifelse(col.species != row.spec, cij, 1)
+  }
+  
+  # use bernoulli trial to determine which connections truly happened
+  bern.matrix <- array(rbinom(A ^ 2, 1, inter.matrix), dim=c(A, A))
+  
+  # alter m accordingly
+  m <- m * bern.matrix
+
   # identify whether susceptibles have contacted infectious
   # number of susceptibles
   infected <- apply(pstate[t , ,], 1, sum)
@@ -42,6 +57,8 @@ transmit <- function(t, state, pstate, network.pow,
           i.minds <- minds[minds %in% Iindivs] # which of these are infectious?
           Isites <- which(occupancy == 1)[i.minds] # what sites do they occur in?
           Isp <- which(state[Isites, ] == 1) # what host species are they?
+          interspecies.penalty <- ifelse(Ssp == Isp, 1, cij)
+        #  true.contact <- rbinom(length())
           # what parasites do they have?
           if (class(pstate[t, Isites, ]) == "matrix"){
             n.each <- apply(pstate[t, Isites, ], 2, sum)
@@ -53,7 +70,7 @@ transmit <- function(t, state, pstate, network.pow,
           # Ipars is a vector with the sum of parsite contacts for each parasite species
           ppestab <- pPcol[Ssp, Ipars] # probability of parasite establishment in that host species
           # adjust this probability to account for interspecific transmission? built-in
-          ptrial <- rbinom(length(Ipars), 1, ppestab) # is establishment possible
+          ptrial <- rbinom(length(Ipars), 1, ppestab * interspecies.penalty) # is establishment possible
           # store potential transmission data in a host X symbiont matrix, where number
           # indicates the number of potential establishment events
           z <- rep(NA, P)

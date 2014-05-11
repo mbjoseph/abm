@@ -7,3 +7,5 @@ Work:
 1) implement static host formulation
 2) estimate beta at each time step
 3) estimate R0 for each pathogen
+4) allow co-infection
+5) generate # of symbionts vs. colonization & extinction rates (within & among hosts)
