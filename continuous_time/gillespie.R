@@ -5,6 +5,47 @@ d <- 1 # death rate
 c <- .1 # colonization rate for empty cells
 cells <- 100 # number of habitat patches
 
+# establish environmental conditions for each cell
+Emin <- -1
+Emax <- 1
+Xe <- sort(runif(cells, Emin, Emax))
+
+H <- 100 # number of host species
+sig.h <- 1/3 # host niche breadth
+ERmin <- Emin
+ERmax <- Emax
+mu.h <- runif(H, ERmin, ERmax) # host optima
+sigma.h <- rep(sig.h, H) # runif(P, 1, 10) # parasite niche width
+
+# calculate host Z
+hZ <- rep(NA, H)
+for (i in 1:H){
+  integrand <- function(Xe) {
+    exp(-((Xe - mu.h[i]) ^ 2) / (2 * sigma.h[i] ^ 2))
+  }
+  res <- integrate(integrand, lower=ERmin, upper=ERmax)
+  hZ[i] <- 1 / res$value
+}
+
+# host probability of establishment
+Pcol <- array(dim=c(cells, H))
+for (i in 1:cells){
+  for (j in 1:H){
+    Pcol[i, j] <- hZ[j] * exp(-((Xe[i] - mu.h[j]) ^ 2) / (2 * sigma.h[j] ^ 2))
+  }
+}
+
+plot(Xe, Pcol[, 1], xlim=c(ERmin, ERmax), ylim=c(0, max(Pcol)), type="l")
+for (i in 2:H){
+  lines(Xe, Pcol[, i], col=i)
+}
+
+# store parasite niche data
+host.species <- rep(1:H, each=cells)
+environmental.condition <- rep(Xe, H)
+Pr.estab <- c(Pcol)
+hniche.d <- data.frame(host.species, environmental.condition, Pr.estab)
+
 maxt <- 50
 t <- 0
 
