@@ -1,17 +1,17 @@
 # plants on grid, reproduce with rate r, die rate d
 rm(list=ls())
-r <- 2.0 # reproductive rate
-d <- 1 # death rate
-c <- .1 # colonization rate for empty cells
-cells <- 100 # number of habitat patches
+r <- 1 # reproductive rate
+d <- .01 # death rate
+c <- .01 # colonization rate for empty cells
+cells <- 50 # number of habitat patches
 
 # establish environmental conditions for each cell
-Emin <- -1
-Emax <- 1
+Emin <- -10
+Emax <- 10
 Xe <- sort(runif(cells, Emin, Emax))
 
-H <- 100 # number of host species
-sig.h <- 1/3 # host niche breadth
+H <- 3 # number of host species
+sig.h <- runif(H, 1, 10) # host niche breadth
 ERmin <- Emin
 ERmax <- Emax
 mu.h <- runif(H, ERmin, ERmax) # host optima
@@ -29,24 +29,27 @@ for (i in 1:H){
 
 # host probability of establishment
 Pcol <- array(dim=c(cells, H))
-for (i in 1:cells){
-  for (j in 1:H){
-    Pcol[i, j] <- hZ[j] * exp(-((Xe[i] - mu.h[j]) ^ 2) / (2 * sigma.h[j] ^ 2))
+for (i in 1:H){
+  for (j in 1:cells){
+    Pcol[j, i] <- hZ[i] * exp(-((Xe[j] - mu.h[i]) ^ 2) / (2 * sigma.h[i] ^ 2))
   }
 }
 
-plot(Xe, Pcol[, 1], xlim=c(ERmin, ERmax), ylim=c(0, max(Pcol)), type="l")
+par(mfrow=c(1, 3))
+plot(Xe, Pcol[, 1], xlim=c(ERmin, ERmax), 
+     ylim=c(0, max(Pcol)), 
+     type="l")
 for (i in 2:H){
   lines(Xe, Pcol[, i], col=i)
 }
-
+points(x=Xe, y=rep(0, length(Xe)))
 # store parasite niche data
 host.species <- rep(1:H, each=cells)
 environmental.condition <- rep(Xe, H)
 Pr.estab <- c(Pcol)
 hniche.d <- data.frame(host.species, environmental.condition, Pr.estab)
 
-maxt <- 50
+maxt <- 2000
 t <- 0
 
 X <- rep(0, cells)
@@ -55,74 +58,78 @@ X <- rep(0, cells)
 # X[sample(1:cells, size=1)] <- 1
 
 t.int <- 1
-n.ind <- sum(X)
+n.ind <- array(0, dim=c(1, H))
 tau <- NULL
 
-pars <- c(r = r, d = d, c = c, cells = cells)
+pars <- c(r = r, d = d, c = c, cells = cells, H=H)
 
 # Rate function
 ratefun <- function(X, params){
   with(c(as.list(params)),
        list(
-         birth = ifelse(X == 1, r, 0),
-         death = ifelse(X == 1, d, 0),
-         colon = rep(c, length(X)))
+         birth = ifelse(X > 0, r, 0),
+         death = ifelse(X > 0, d, 0),
+         colon = rep(c * H, cells))
        )
 }
 
 # agent-based model step function
-ABMstep <- function(state, action, cell){
+ABMstep <- function(state, action, cell, H, Pcol){
+  counter <- 0
   if (action == "birth"){
     # find cell to disperse to
     disp.cell <- sample(1:cells, size=1)
     if (state[disp.cell] == 0){
-      state[disp.cell] <- state[disp.cell] + 1
+      success <- rbinom(1, 1, prob = Pcol[disp.cell, state[cell]])
+      state[disp.cell] <- state[disp.cell] + ifelse(success == 1, state[cell], 0)
+      counter <- counter + success
     }
   }
   if (action == "death"){
     state[cell] <- 0
+    counter <- counter + 1
   }
   if (action == "colon"){
-    # ensure that this function is not called if cell occupied
-    state[cell] <- 1
+    if (state[cell] == 0){
+      spnum <- sample(1:H, 1)
+      success <- rbinom(1, 1, prob = Pcol[cell, spnum])
+      state[cell] <- ifelse(success == 1, spnum, 0)
+      counter <- counter + success
+    }
   }
-  return(state)
+  return(list(state=state, counter = counter))
 }
 
-
 ntrans <- 3 * cells
-transctr <- rep(0, ntrans)
+transctr <- rep(0, ntrans) # transition counter
 
 while(t[t.int] < maxt){
-  
   ratelist <- ratefun(X, pars)
   rates <- unlist(ratelist)
-  rnames <- rep(names(ratelist), each=cells)
+  rnames <- rep(names(ratelist), times=c(cells, cells, cells * H))
   ntrans <- length(rates)
   tot.rates <- sum(rates)
   tau[t.int] <- rexp(1, tot.rates)
   event <- sample((1:ntrans)[rates > 0], 
                   size=1, 
                   prob = rates[rates > 0])
-  transctr[event] <- transctr[event] + 1
   f_name <- names(rates[event])
   event_type <- rnames[event]
   cell_num <- event - cells * (which(names(ratelist) == event_type) - 1)
+  
+  # carry out action on chosen cell
+  nextstep <- ABMstep(X, event_type, cell_num, H, Pcol)
+  X <- nextstep$state
+  transctr[event] <- transctr[event] + nextstep$counter
+
   # update time
   t.int <- t.int + 1
   t[t.int] <- t[t.int - 1] + tau[t.int-1]
-  
-  # carry out action on chosen cell
-  if (event_type == "colon" & X[cell_num] == 1){
-    transctr[event] <- transctr[event] - 1 # uncount that event
-  } else {
-    X <- ABMstep(X, event_type, cell_num)
-  }
-  n.ind[t.int] <- sum(X)
+  n.ind <- rbind(n.ind, tabulate(X, nbins=H))
 }
 
-par(mfrow=c(1, 2))
-plot(t, n.ind, type="l")
+plot(t, n.ind[, 1], type="l", ylim=c(0, max(n.ind)))
+for (i in 2:H){
+  lines(t, n.ind[, i], col=i)
+}
 plot(density(log(tau)))
-
-relist(transctr, ratelist)
