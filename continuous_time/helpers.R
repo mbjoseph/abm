@@ -1,7 +1,9 @@
 # Helper functions for gillespie implementation of ABM
 
 # Rate function generates rates of all events given current state & params
-ratefun <- function(X, S, params){
+ratefun <- function(state, params){
+  X <- state[1, ]
+  S <- state[2, ]
   with(c(as.list(params)),
        list(
          birth = ifelse(X > 0, r, 0),
@@ -14,7 +16,9 @@ ratefun <- function(X, S, params){
 }
 
 # helper function to update symbiont state through transmission
-transmit <- function(X, S, cell1, cell2, params){
+transmit <- function(state, cell1, cell2, params){
+  X <- state[1, ]
+  S <- state[2, ]
   pr.estab <- params$symbionts$Pcol[X[cell2], S[cell1]] # is a host x symb array
   success <- rbinom(1, 1, pr.estab)
   if (success){
@@ -24,56 +28,55 @@ transmit <- function(X, S, cell1, cell2, params){
 }
 
 # agent-based model step function
-ABMstep <- function(state, action, cell, H, S, params){
+ABMstep <- function(state, action, cell, params){
+  
   counter <- 0
   if (action == "birth"){
-    # find cell to disperse to
+    # find cell for host to disperse to
     disp.cell <- sample(1:cells, size=1)
-    if (state[disp.cell] == 0){
-      success <- rbinom(1, 1, prob = params$hosts$Pcol[disp.cell, state[cell]])
-      state[disp.cell] <- state[disp.cell] + ifelse(success == 1, state[cell], 0)
+    if (state[1, disp.cell] == 0){
+      success <- rbinom(1, 1, prob = params$hosts$Pcol[disp.cell, state[1, cell]])
+      state[1, disp.cell] <- state[1, disp.cell] + ifelse(success == 1, state[1, cell], 0)
       counter <- counter + success
     }
   }
   if (action == "cntct"){
-    # find individual to contact
-    Sindivs <- which(X > 0 & S == 0)
+    # find individual for host to contact
+    Sindivs <- which(state[1, ] > 0 & state[2, ] == 0)
     if (length(Sindivs) == 1){
       ind_contacted <- Sindivs
     } else {
       ind_contacted <- sample(Sindivs, size=1)
     }
-    same_species <- ifelse(state[cell] == state[ind_contacted], 1, 0)
-    contact_realized <- rbinom(1, 1, 
-                               prob = ifelse(same_species, phi, phi * a_pen))
+    same_species <- state[1, cell] == state[1, ind_contacted]
+    contact_realized <- rbinom(1, 1, ifelse(same_species, phi, phi * a_pen))
     # if contact realized, check for transmission
     if (contact_realized){
       # call to transmission function
-      S <- transmit(state, S, cell, ind_contacted, params)
+      state[2, ] <- transmit(state, cell, ind_contacted, params)
     }
   }
   if (action == "rains"){
-    if(S[cell] == 0){
+    if(state[2, cell] == 0){
       # eventually call to symbiont rain function
       attempting <- sample(1:params$nS, size=1)
-      success <- rbinom(1, 1, prob=params$symbionts$Pcol[state[cell], attempting])
+      success <- rbinom(1, 1, params$symbionts$Pcol[state[1, cell], attempting])
       if (success){
-        S[cell] <- attempting
+        state[2, cell] <- attempting
       }
     }
   }
   if (action == "death"){
-    state[cell] <- 0
-    S[cell] <- 0
+    state[, cell] <- 0 # host and symbiont dies
     counter <- counter + 1
   }
   if (action == "colon"){
-    if (state[cell] == 0){
-      spnum <- sample(1:H, 1)
+    if (state[1, cell] == 0){
+      spnum <- sample(1:params$H, 1)
       success <- rbinom(1, 1, prob = params$hosts$Pcol[cell, spnum])
-      state[cell] <- ifelse(success == 1, spnum, 0)
+      state[1, cell] <- ifelse(success == 1, spnum, 0)
       counter <- counter + success
     }
   }
-  return(list(state=state, S = S, counter = counter))
+  return(list(state=state, counter = counter))
 }

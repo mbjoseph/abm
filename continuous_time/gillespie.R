@@ -14,23 +14,22 @@ c <- .001 # colonization rate for empty cells
 phi <- .2 # interspecific contact rates
 a_pen <- .1 # among-species adjustment for contact rates
 rs <- .001 # rate at which symbionts rain
-cells <- 100 # number of habitat patches
+cells <- 1000 # number of habitat patches
 
 # host community parameters
 Emin <- -5
 Emax <- 5
-H <- 50
+H <- 2
 sig.h <- 50
 
 # symbiont community parameters
 sEmin <- -5
 sEmax <- 5
-nS <- 50
+nS <- 2
 sig.s <- 50
 
 # initialize state arrays, time objects, and abundance counters
-X <- rep(0, cells) # hosts
-S <- rep(0, cells) # symbionts
+state <- array(0, dim=c(2, cells))
 n.ind <- array(0, dim=c(1, H))
 s.ind <- array(0, dim=c(1, nS))
 rnames <- rep(c("birth", "death", "colon", "cntct", "rains"), 
@@ -66,7 +65,7 @@ pars <- list(r = r, d = d, c = c,
              cells = cells, H=H, nS=nS, 
              symbionts=symbionts, hosts=hosts)
 
-maxt <- 500
+maxt <- 200
 t <- 0
 t.int <- 1
 tau <- NULL
@@ -75,29 +74,26 @@ tau <- NULL
 pb <- txtProgressBar(min=0, max=maxt, style=3)
 while(t[t.int] < maxt){
   
-  ratelist <- ratefun(X, S, pars)
+  ratelist <- ratefun(state, pars)
   rates <- unlist(ratelist)
   tot.rates <- sum(rates)
   tau[t.int] <- rexp(1, tot.rates)
-  event <- sample((1:ntrans)[rates > 0], 
-                  size=1, 
-                  prob = rates[rates > 0])
+  event <- sample(1:ntrans, size=1, prob=rates)
   f_name <- names(rates[event])
   event_type <- rnames[event]
   cell_num <- event - cells * (which(names(ratelist) == event_type) - 1)
   
   # carry out action on chosen cell
-  nextstep <- ABMstep(X, event_type, cell_num, H, S, params=pars)
-  X <- nextstep$state
-  S <- nextstep$S
+  nextstep <- ABMstep(state, event_type, cell_num, params=pars)
+  state <- nextstep$state
   transctr[event] <- transctr[event] + nextstep$counter
 
   # update time
   t.int <- t.int + 1
   t[t.int] <- t[t.int - 1] + tau[t.int-1]
   setTxtProgressBar(pb, t[t.int])
-  n.ind <- rbind(n.ind, tabulate(X, nbins=H))
-  s.ind <- rbind(s.ind, tabulate(S, nbins=nS))
+  n.ind <- rbind(n.ind, tabulate(state[1, ], nbins=H))
+  s.ind <- rbind(s.ind, tabulate(state[2, ], nbins=nS))
 }
 
 par(mfrow=c(1, 3))
