@@ -24,12 +24,11 @@ transmit <- function(state, cell1, cell2, params){
   if (success){
     S[cell2] <- S[cell1]
   }
-  return(S)
+  return(list(S=S, success=success))
 }
 
 # agent-based model step function
-ABMstep <- function(state, action, cell, params){
-  
+ABMstep <- function(state, action, cell, params, transmission_events){
   counter <- 0
   if (action == "birth"){
     # find cell for host to disperse to
@@ -48,12 +47,19 @@ ABMstep <- function(state, action, cell, params){
     } else {
       ind_contacted <- sample(Sindivs, size=1)
     }
-    same_species <- state[1, cell] == state[1, ind_contacted]
+    sp1 <- state[1, cell]
+    sp2 <- state[1, ind_contacted]
+    same_species <- sp1 == sp2
     contact_realized <- rbinom(1, 1, ifelse(same_species, phi, phi * a_pen))
     # if contact realized, check for transmission
     if (contact_realized){
+      counter <- counter + contact_realized
       # call to transmission function
-      state[2, ] <- transmit(state, cell, ind_contacted, params)
+      t_out <- transmit(state, cell, ind_contacted, params)
+      if (t_out$success){
+        state[2, ] <- t_out$S
+        transmission_events[sp1, sp2, state[2, cell]] <- transmission_events[sp1, sp2, state[2, cell]] + t_out$success
+      }
     }
   }
   if (action == "rains"){
@@ -63,6 +69,7 @@ ABMstep <- function(state, action, cell, params){
       success <- rbinom(1, 1, params$symbionts$Pcol[state[1, cell], attempting])
       if (success){
         state[2, cell] <- attempting
+        counter <- counter + success
       }
     }
   }
@@ -78,5 +85,6 @@ ABMstep <- function(state, action, cell, params){
       counter <- counter + success
     }
   }
-  return(list(state=state, counter = counter))
+  return(list(state=state, counter = counter, 
+              transmission_events=transmission_events))
 }

@@ -9,24 +9,24 @@ source("helpers.R")
 
 ## Define most important parameters
 r <- 1 # reproductive rate
-d <- .05 # death rate
+d <- 0.01 # death rate
 c <- .001 # colonization rate for empty cells
-phi <- .2 # interspecific contact rates
-a_pen <- .1 # among-species adjustment for contact rates
-rs <- .001 # rate at which symbionts rain
-cells <- 1000 # number of habitat patches
+phi <- .75 # interspecific contact rates
+a_pen <- 1 # among-species adjustment for contact rates
+rs <- 0.01 # rate at which symbionts rain
+cells <- 150 # number of habitat patches
 
 # host community parameters
-Emin <- -5
-Emax <- 5
-H <- 2
-sig.h <- 50
+Emin <- -20 # min environmental condition
+Emax <- 20 # max environmental conditionb
+H <- 20 # regional host richness
+sig.h <- 10 # host niche width
 
 # symbiont community parameters
-sEmin <- -5
-sEmax <- 5
-nS <- 2
-sig.s <- 50
+sEmin <- -20 # min w/in host condition
+sEmax <- 20 # max w/in host condition
+nS <- 20 # regional symbiont richness
+sig.s <- 10 # symbiont niche width
 
 # initialize state arrays, time objects, and abundance counters
 state <- array(0, dim=c(2, cells))
@@ -36,6 +36,8 @@ rnames <- rep(c("birth", "death", "colon", "cntct", "rains"),
               each=cells)
 ntrans <- length(rnames)
 transctr <- rep(0, ntrans) # transition counter
+
+transmission_events <- array(0, dim=c(H, H, nS))
 
 # initialize host community and visualize host niches
 hosts <- host_init(cells, Emin, Emax, H, sig.h)
@@ -65,15 +67,13 @@ pars <- list(r = r, d = d, c = c,
              cells = cells, H=H, nS=nS, 
              symbionts=symbionts, hosts=hosts)
 
-maxt <- 200
+maxt <- 300
 t <- 0
 t.int <- 1
 tau <- NULL
 
-
 pb <- txtProgressBar(min=0, max=maxt, style=3)
 while(t[t.int] < maxt){
-  
   ratelist <- ratefun(state, pars)
   rates <- unlist(ratelist)
   tot.rates <- sum(rates)
@@ -84,9 +84,11 @@ while(t[t.int] < maxt){
   cell_num <- event - cells * (which(names(ratelist) == event_type) - 1)
   
   # carry out action on chosen cell
-  nextstep <- ABMstep(state, event_type, cell_num, params=pars)
+  nextstep <- ABMstep(state, event_type, cell_num, 
+                      params=pars, transmission_events)
   state <- nextstep$state
   transctr[event] <- transctr[event] + nextstep$counter
+  transmission_events <- nextstep$transmission_events
 
   # update time
   t.int <- t.int + 1
