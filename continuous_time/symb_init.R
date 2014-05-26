@@ -11,13 +11,9 @@
 ## sniche.d = data frame of symbiont niche data
 ## P.col = host X symbiont species array of colonization probabilities
 
-symb_init <- function(H, S, sEmin, sEmax, sig.s){
+symb_init <- function(H, S, sEmin, sEmax, sERmin, sERmax, sig.s){
   # setup ordered vector of environmental conditions
   Xe <- sort(runif(H, sEmin, sEmax))
-  
-  # assume regional min & max = local min & max
-  sERmin <- sEmin 
-  sERmax <- sEmax
   
   # symbiont optima
   mu.s <- runif(S, sERmin, sERmax)

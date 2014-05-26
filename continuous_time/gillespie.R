@@ -14,7 +14,7 @@ c <- .001 # colonization rate for empty cells
 phi <- .75 # interspecific contact rates
 a_pen <- 1 # among-species adjustment for contact rates
 rs <- 0.01 # rate at which symbionts rain
-cells <- 150 # number of habitat patches
+cells <- 50 # number of habitat patches
 
 # host community parameters
 Emin <- -20 # min environmental condition
@@ -96,6 +96,11 @@ while(t[t.int] < maxt){
   setTxtProgressBar(pb, t[t.int])
   n.ind <- rbind(n.ind, tabulate(state[1, ], nbins=H))
   s.ind <- rbind(s.ind, tabulate(state[2, ], nbins=nS))
+}
+
+rich <- rep(NA, dim(s.ind)[1])
+for (i in 1:dim(s.ind)[1]){
+  rich[i] <- sum(s.ind[i, ] > 0)
 }
 
 par(mfrow=c(1, 3))

@@ -1,18 +1,3 @@
-## Two main components for EEID poster
-# 1. How does host richness & functional diversity affect symbiont transmission & richness?
-#    - fixed host communities of varying functional diversity & among species transmission
-#    - record symbiont transmission rates & richness
-# 2. How does habitat heterogeneity affect symbiont transmission & richness?
-
-# 1. Host richness & functional diversity's effects on symbionts
-# Need to create host communities that are static that vary in heterogeneity
-# and for each of these, explore consequences of varying interspecies transmiss.
-# for each run, record mean symbiont transmission & richness
-rm(list=ls())
-setwd("/home/max/Documents/abm/continuous_time")
-source("helpers.R")
-source("symb_init.R")
-
 mpi_f <- function(iter=1, nER=1, maxt=10, H=10, nS=10, 
                   a_pen=0.1, sig.s=10, gamma=0.01){
   # generate environmental ranges
@@ -109,7 +94,7 @@ mpi_f <- function(iter=1, nER=1, maxt=10, H=10, nS=10,
         n.ind <- rbind(n.ind, tabulate(state[1, ], nbins=H))
         s.ind <- rbind(s.ind, tabulate(state[2, ], nbins=nS))
       }
-  
+      
       rich <- rep(NA, dim(s.ind)[1])
       for (k in 1:dim(s.ind)[1]){
         rich[k] <- sum(s.ind[k, ] > 0)
@@ -121,7 +106,7 @@ mpi_f <- function(iter=1, nER=1, maxt=10, H=10, nS=10,
   }
   return(list(trans_bar = trans_bar, 
               rich_bar = rich_bar)
-         )
+  )
 }
 
 # testout <- mpi_f(nER=2, iter=2)

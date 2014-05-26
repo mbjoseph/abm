@@ -10,7 +10,8 @@ ratefun <- function(state, params){
          death = ifelse(X > 0, d, 0),
          colon = ifelse(X == 0, c * H, 0), 
          cntct = ifelse(S > 0, phi * (sum(X > 0 & S == 0)), 0), # minus one, can't contact self
-         rains = ifelse((X > 0 & S == 0), rs * nS, 0)
+         rains = ifelse((X > 0 & S == 0), rs * nS, 0), 
+         recov = ifelse((X > 0 & S > 0), gamma, 0)
        )
   )
 }
@@ -50,7 +51,7 @@ ABMstep <- function(state, action, cell, params, transmission_events){
     sp1 <- state[1, cell]
     sp2 <- state[1, ind_contacted]
     same_species <- sp1 == sp2
-    contact_realized <- rbinom(1, 1, ifelse(same_species, phi, phi * a_pen))
+    contact_realized <- rbinom(1, 1, ifelse(same_species, 1, params$a_pen))
     # if contact realized, check for transmission
     if (contact_realized){
       counter <- counter + contact_realized
@@ -75,6 +76,10 @@ ABMstep <- function(state, action, cell, params, transmission_events){
   }
   if (action == "death"){
     state[, cell] <- 0 # host and symbiont dies
+    counter <- counter + 1
+  }
+  if (action == "recov"){
+    state[2, cell] <- 0 # symbiont dies
     counter <- counter + 1
   }
   if (action == "colon"){
