@@ -105,8 +105,10 @@ mpi_f <- function(iter=1, nER=1, maxt=10, H=10, nS=10,
     }  
   }
   return(list(trans_bar = trans_bar, 
-              rich_bar = rich_bar)
+              rich_bar = rich_bar, 
+              ER = ER, 
+              Earray = Earray)
   )
 }
 
-# testout <- mpi_f(nER=2, iter=2)
+# testout <- mpi_f(nER=1, iter=1, maxt=50)
