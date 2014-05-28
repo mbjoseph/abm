@@ -1,5 +1,5 @@
 mpi_f <- function(iter=1, nER=1, maxt=10, H=10, nS=10, 
-                  a_pen=0.1, sig.s=10, gamma=0.01){
+                  a_pen=0.1, sig.s=10, gamma=0.01, cells=100){
   # generate environmental ranges
   ER <- sample(seq(1, 100, by=.01), size = nER, replace=FALSE)
   
@@ -28,7 +28,6 @@ mpi_f <- function(iter=1, nER=1, maxt=10, H=10, nS=10,
   phi <- .5 # contact rate
   # a_pen <- .1 # interspecific penalty
   rs <- .01 # rain
-  cells <- 200 # number of host individuals
   # nS <- 50 # regional symbiont richness
   # sig.s <- 10 # niche width
   # gamma <- .01 # recovery rate
@@ -111,4 +110,4 @@ mpi_f <- function(iter=1, nER=1, maxt=10, H=10, nS=10,
   )
 }
 
-# testout <- mpi_f(nER=1, iter=1, maxt=50)
+testout <- mpi_f(nER=1, iter=1, maxt=500, nS=100, sig.s=5, H=20, cells=1000)
