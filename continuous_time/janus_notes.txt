@@ -11,3 +11,8 @@ symb_init.r # symbiont initialization function
 mpi_call.sh # call to mpi functions
 mpi_f.r # parallel call to sim_f w/ mpi
 
+# Slurm commands, replaces torque and moab
+module load slurm
+sbatch -quos=<queue> file
+# check job in queue
+squeue -u $USER
