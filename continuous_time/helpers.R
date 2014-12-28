@@ -2,12 +2,12 @@
 
 # Rate function generates rates of all events given current state & params
 ratefun <- function(state, params){
-  X <- state[1, ]
-  S <- state[2, ]
+  X <- state[1, ] # host state
+  S <- state[2, ] # symbiont state
   with(c(as.list(params)),
        list(
          birth = ifelse(X > 0, r, 0),
-         death = ifelse(X > 0, d, 0),
+         death = ifelse(X > 0, d * (1 + beta_d * (S > 0)), 0),
          colon = ifelse(X == 0, c * H, 0), 
          cntct = ifelse(S > 0, phi * (sum(X > 0 & S == 0)), 0), # minus one, can't contact self
          rains = ifelse((X > 0 & S == 0), rs * nS, 0), 
