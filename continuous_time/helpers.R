@@ -28,11 +28,13 @@ transmit <- function(state, cell1, cell2, params){
   return(list(S=S, success=success))
 }
 
+
 # agent-based model step function
 ABMstep <- function(state, action, cell, params, transmission_events){
   counter <- 0
   if (action == "birth"){
     # find cell for host to disperse to
+    cells <- dim(state)[2]
     disp.cell <- sample(1:cells, size=1)
     if (state[1, disp.cell] == 0){
       success <- rbinom(1, 1, prob = params$hosts$Pcol[disp.cell, state[1, cell]])

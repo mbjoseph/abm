@@ -1,5 +1,6 @@
 mpi_f <- function(iter=1, nER=1, maxt=10, H=10, nS=10, 
                   a_pen=0.1, sig.s=10, rs=.1, gamma=0.1, cells=100){
+  require(ggplot2)
   source("symb_init.R")
   source("host_init.R")
   source("helpers.R")
@@ -26,15 +27,9 @@ mpi_f <- function(iter=1, nER=1, maxt=10, H=10, nS=10,
   d <- 0.1
   beta_d <- -1
   c <- 0.1
-  # H <- 10 # host richness (max)
   
   # symbiont params
   phi <- 5 # contact rate
-  # a_pen <- .1 # interspecific penalty
-  # rs <- .01 # rain
-  # nS <- 50 # regional symbiont richness
-  # sig.s <- 10 # niche width
-  # gamma <- .01 # recovery rate
   
   trans_bar <- array(dim=c(H, H, nS, nER, iter))
   rich_bar <- array(dim=c(nER, iter))
