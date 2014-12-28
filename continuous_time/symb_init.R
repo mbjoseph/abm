@@ -46,3 +46,19 @@ symb_init <- function(H, S, sEmin, sEmax, sERmin, sERmax, sig.s){
   sniche.d <- data.frame(symbiont.species, host.condition, Pr.estab)
   return(list(sniche.d = sniche.d, Pcol = Pcol))
 }
+
+# test 
+out <- symb_init(H=1000, S=9, sEmin=-50, sEmax=50, sERmin=-50, sERmax=50, sig.s=4)
+exER <- data.frame(host.condition = runif(50, -30, 0))
+out$sniche.d$Symbiont <- as.factor(out$sniche.d$symbiont.species)
+
+ggplot(out$sniche.d, aes(x=host.condition, y=Pr.estab)) + 
+  geom_line(aes(col=Symbiont, group=Symbiont), size=2) + 
+  theme_classic() + 
+  geom_point(data=exER, aes(x=host.condition, y=-.01), pch="|", size=4) + 
+  xlab("Within-host condition") + 
+  ylab("Probability of establishment") + 
+  theme(legend.position="bottom") + 
+  theme(legend.background = element_rect(color="black", size=.5)) + 
+  scale_colour_brewer(palette="Set1")
+
