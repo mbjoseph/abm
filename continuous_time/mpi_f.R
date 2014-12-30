@@ -23,9 +23,9 @@ mpi_f <- function(iter=1, nER=1, maxt=10, H=10, nS=10,
   
   # initialize parameters to stay constant across runs
   # (dynamic host community)
-  r <- 1
+  r <- 2
   d <- 0.1
-  beta_d <- -1
+  beta_d <- 10
   c <- 0.1
   
   # symbiont params
@@ -44,7 +44,7 @@ mpi_f <- function(iter=1, nER=1, maxt=10, H=10, nS=10,
                     each=cells)
       ntrans <- length(rnames)
       transctr <- rep(0, ntrans) # transition counter
-      transmission_events <- array(0, dim=c(H, H, nS))
+      transmitted <- array(0, dim=c(H, H, nS))
       
       # initialize host community
       # state[1, ] <- sample(1:H, size=cells, replace=T)
@@ -80,10 +80,10 @@ mpi_f <- function(iter=1, nER=1, maxt=10, H=10, nS=10,
         
         # carry out action on chosen cell
         nextstep <- ABMstep(state, event_type, cell_num, 
-                            params=pars, transmission_events)
+                            params=pars, transmitted)
         state <- nextstep$state
         transctr[event] <- transctr[event] + nextstep$counter
-        transmission_events <- nextstep$transmission_events
+        transmitted <- nextstep$transmitted
         
         # update time
         t.int <- t.int + 1
@@ -98,7 +98,7 @@ mpi_f <- function(iter=1, nER=1, maxt=10, H=10, nS=10,
         rich[k] <- sum(s.ind[k, ] > 0)
       }
       
-      trans_bar[, , , i, j] <- transmission_events
+      trans_bar[, , , i, j] <- transmitted
       rich_bar[i, j] <- mean(rich)
     }  
   }
@@ -108,26 +108,43 @@ mpi_f <- function(iter=1, nER=1, maxt=10, H=10, nS=10,
               Earray = Earray, 
               n.ind = n.ind, 
               s.ind = s.ind,
-              t=t)
+              t=t,
+              hosts=hosts, 
+              symbionts=symbionts)
   )
 }
 
-testout <- mpi_f(nER=1, iter=1, maxt=5, nS=30, sig.s=3, H=10, 
-                 a_pen = .5, cells=400, gamma=0, rs=0.1)
+testout <- mpi_f(nER=1, iter=1, maxt=30, nS=3, sig.s=8, H=3, 
+                 a_pen = 1, cells=400, gamma=0, rs=0.1)
 nsteps <- dim(testout$t)
 
+library(scales)
 par(mfrow=c(1, 2))
 plot(x=testout$t, y=testout$s.ind[, 1], type="l", ylim=c(0, max(testout$s.ind)), 
      xlab="Time", ylab="Number of infected hosts")
 for (k in 1:dim(testout$s.ind)[2]){
   lines(x=testout$t, y=testout$s.ind[, k], col=k + 2)
 }
-
 plot(x=testout$t, y=testout$n.ind[, 1], type="l", 
      ylim=c(0, max(testout$n.ind)), 
      xlab="Time", 
      ylab="Number of hosts")
+
 for (k in 1:dim(testout$n.ind)[2]){
   lines(x=testout$t, y=testout$n.ind[, k], col=k+2)
 }
+
 par(mfrow=c(1, 1))
+
+testout$symbionts$sniche.d$Symbiont <- as.factor(testout$symbionts$sniche.d$symbiont.species)
+
+ggplot(testout$symbionts$sniche.d, 
+       aes(x=host.condition, y=Pr.estab)) + 
+  geom_line(aes(col=Symbiont, group=Symbiont), size=2) + 
+  theme_classic() + 
+  geom_rug(sides="b") +
+  xlab("Within-host condition") + 
+  ylab("Probability of establishment") + 
+  theme(legend.position="bottom") + 
+  theme(legend.background = element_rect(color="black", size=.5))
+
