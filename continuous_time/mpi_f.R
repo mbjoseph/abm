@@ -1,5 +1,6 @@
 mpi_f <- function(iter=1, nER=1, maxt=10, H=10, nS=10, 
-                  a_pen=0.1, sig.s=10, rs=.1, gamma=0.1, cells=100){
+                  a_pen=1, sig.s=10, rs=.1, gamma=0.1, cells=100, 
+                  r=2, d=.1, beta_d = 0, c=.1, phi=5){
   require(ggplot2)
   source("symb_init.R")
   source("host_init.R")
@@ -21,16 +22,6 @@ mpi_f <- function(iter=1, nER=1, maxt=10, H=10, nS=10,
     Earray[i, ] <- c(ERmidpoint - ER[i] / 2, ERmidpoint + ER[i] / 2)
   }
   
-  # initialize parameters to stay constant across runs
-  # (dynamic host community)
-  r <- 2
-  d <- 0.1
-  beta_d <- 10
-  c <- 0.1
-  
-  # symbiont params
-  phi <- 5 # contact rate
-  
   trans_bar <- array(dim=c(H, H, nS, nER, iter))
   rich_bar <- array(dim=c(nER, iter))
   
@@ -47,7 +38,6 @@ mpi_f <- function(iter=1, nER=1, maxt=10, H=10, nS=10,
       transmitted <- array(0, dim=c(H, H, nS))
       
       # initialize host community
-      # state[1, ] <- sample(1:H, size=cells, replace=T)
       hosts <- host_init(cells, H, pcol=.1)
       
       # initialize symbionts and view niches
@@ -72,6 +62,8 @@ mpi_f <- function(iter=1, nER=1, maxt=10, H=10, nS=10,
         ratelist <- ratefun(state, pars)
         rates <- unlist(ratelist)
         tot.rates <- sum(rates)
+        stopifnot(!is.na(tot.rates))
+        stopifnot(all(rates >= 0 ))
         tau[t.int] <- rexp(1, tot.rates)
         event <- sample(1:ntrans, size=1, prob=rates)
         f_name <- names(rates[event])
@@ -114,13 +106,15 @@ mpi_f <- function(iter=1, nER=1, maxt=10, H=10, nS=10,
   )
 }
 
-testout <- mpi_f(nER=1, iter=1, maxt=30, nS=3, sig.s=8, H=3, 
-                 a_pen = 1, cells=400, gamma=0, rs=0.1)
+testout <- mpi_f(iter=1, nER=1, maxt=200, H=1, nS=1, 
+                 a_pen=1, sig.s=50, rs=.5, gamma=0, cells=50, 
+                 r=2, d=.1, beta_d = 0, c=.01, phi=3)
 nsteps <- dim(testout$t)
 
 library(scales)
 par(mfrow=c(1, 2))
-plot(x=testout$t, y=testout$s.ind[, 1], type="l", ylim=c(0, max(testout$s.ind)), 
+plot(x=testout$t, y=testout$s.ind[, 1], type="l", 
+     ylim=c(0, max(testout$s.ind)), 
      xlab="Time", ylab="Number of infected hosts")
 for (k in 1:dim(testout$s.ind)[2]){
   lines(x=testout$t, y=testout$s.ind[, k], col=k + 2)
@@ -133,7 +127,6 @@ plot(x=testout$t, y=testout$n.ind[, 1], type="l",
 for (k in 1:dim(testout$n.ind)[2]){
   lines(x=testout$t, y=testout$n.ind[, k], col=k+2)
 }
-
 par(mfrow=c(1, 1))
 
 testout$symbionts$sniche.d$Symbiont <- as.factor(testout$symbionts$sniche.d$symbiont.species)

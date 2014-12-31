@@ -23,14 +23,14 @@
 ratefun <- function(state, params){
   X <- state[1, ] # host state
   S <- state[2, ] # symbiont state
+  stopifnot(params$beta_d > -1)
   with(c(as.list(params)),
        list(
          birth = ifelse(X > 0, r, 0),
          death = ifelse(X > 0, d * (1 + beta_d * (S > 0)), 0),
          colon = ifelse(X == 0, c * H, 0), 
-         cntct = ifelse(S > 0, phi * (sum(X > 0 & S == 0) - 1), 0), 
-         # ^ minus one, can't contact self
-         # should incorporate a_pen here, to avoid unrealized contacts
+         cntct = ifelse(S > 0, phi * (sum(X > 0 & S == 0)), 0), 
+         # could incorporate a_pen here, to avoid unrealized contacts
          rains = ifelse((X > 0 & S == 0), rs * nS, 0), 
          recov = ifelse((X > 0 & S > 0), gamma, 0)
        )
@@ -75,8 +75,10 @@ ABMstep <- function(state, action, cell, params, transmitted){
     }
     sp1 <- state[1, cell]
     sp2 <- state[1, ind_contacted]
-    same_species <- sp1 == sp2
-    contact_realized <- rbinom(1, 1, ifelse(same_species, 1, params$a_pen))
+    same_species <- as.numeric(sp1 == sp2)
+    contact_realized <- rbinom(1, 1, 
+                               same_species + 
+                                 (1 - same_species) * params$a_pen)
     # if contact realized, check for transmission
     if (contact_realized){
       counter <- counter + 1
