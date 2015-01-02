@@ -1,5 +1,6 @@
 # Post-JANUS analysis
 setwd("continuous_time")
+system("rsync --update -raz --progress majo3748@login.rc.colorado.edu:/projects/majo3748/abm/ ~/Documents/manuscripts/abm/continuous_time/")
 load("test.rdata")
 #load("sig_s2.rdata")
 str(xx[[1]])
