@@ -1,7 +1,6 @@
-mpi_f <- function(iter=1, nER=1, maxt=10, H=10, nS=10, 
+mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10, 
                   a_pen=1, sig.s=10, rs=.1, gamma=0.1, cells=100, 
                   r=2, d=.1, beta_d = 0, c=.1, phi=5){
-  require(ggplot2)
   source("symb_init.R")
   source("host_init.R")
   source("helpers.R")
@@ -38,7 +37,7 @@ mpi_f <- function(iter=1, nER=1, maxt=10, H=10, nS=10,
       transmitted <- array(0, dim=c(H, H, nS))
       
       # initialize host community
-      hosts <- host_init(cells, H, pcol=.1)
+      hosts <- host_init(cells, H, pcol=1)
       
       # initialize symbionts and view niches
       symbionts <- symb_init(H, S=nS, 
@@ -106,38 +105,43 @@ mpi_f <- function(iter=1, nER=1, maxt=10, H=10, nS=10,
   )
 }
 
-testout <- mpi_f(iter=1, nER=1, maxt=200, H=1, nS=1, 
-                 a_pen=1, sig.s=50, rs=.5, gamma=0, cells=50, 
-                 r=2, d=.1, beta_d = 0, c=.01, phi=3)
-nsteps <- dim(testout$t)
+check <- FALSE
 
-library(scales)
-par(mfrow=c(1, 2))
-plot(x=testout$t, y=testout$s.ind[, 1], type="l", 
-     ylim=c(0, max(testout$s.ind)), 
-     xlab="Time", ylab="Number of infected hosts")
-for (k in 1:dim(testout$s.ind)[2]){
-  lines(x=testout$t, y=testout$s.ind[, k], col=k + 2)
+if (check){
+  
+  testout <- mpi_f(iter=1, nER=1, maxt=3, H=30, nS=30, 
+                   a_pen=1, sig.s=3, rs=.1, gamma=0, cells=200, 
+                   r=1, d=.3, beta_d = 0, c=.01, phi=5)
+  
+  nsteps <- dim(testout$t)
+  
+  library(scales)
+  par(mfrow=c(1, 2))
+  plot(x=testout$t, y=testout$s.ind[, 1], type="l", 
+       ylim=c(0, max(testout$s.ind)), 
+       xlab="Time", ylab="Number of infected hosts")
+  for (k in 1:dim(testout$s.ind)[2]){
+    lines(x=testout$t, y=testout$s.ind[, k], col=k + 2)
+  }
+  plot(x=testout$t, y=testout$n.ind[, 1], type="l", 
+       ylim=c(0, max(testout$n.ind)), 
+       xlab="Time", 
+       ylab="Number of hosts")
+  
+  for (k in 1:dim(testout$n.ind)[2]){
+    lines(x=testout$t, y=testout$n.ind[, k], col=k+2)
+  }
+  par(mfrow=c(1, 1))
+  
+  testout$symbionts$sniche.d$Symbiont <- as.factor(testout$symbionts$sniche.d$symbiont.species)
+  
+  ggplot(testout$symbionts$sniche.d, 
+         aes(x=host.condition, y=Pr.estab)) + 
+    geom_line(aes(col=Symbiont, group=Symbiont), size=2) + 
+    theme_classic() + 
+    geom_rug(sides="b") +
+    xlab("Within-host condition") + 
+    ylab("Probability of establishment") + 
+    theme(legend.position="bottom") + 
+    theme(legend.background = element_rect(color="black", size=.5))
 }
-plot(x=testout$t, y=testout$n.ind[, 1], type="l", 
-     ylim=c(0, max(testout$n.ind)), 
-     xlab="Time", 
-     ylab="Number of hosts")
-
-for (k in 1:dim(testout$n.ind)[2]){
-  lines(x=testout$t, y=testout$n.ind[, k], col=k+2)
-}
-par(mfrow=c(1, 1))
-
-testout$symbionts$sniche.d$Symbiont <- as.factor(testout$symbionts$sniche.d$symbiont.species)
-
-ggplot(testout$symbionts$sniche.d, 
-       aes(x=host.condition, y=Pr.estab)) + 
-  geom_line(aes(col=Symbiont, group=Symbiont), size=2) + 
-  theme_classic() + 
-  geom_rug(sides="b") +
-  xlab("Within-host condition") + 
-  ylab("Probability of establishment") + 
-  theme(legend.position="bottom") + 
-  theme(legend.background = element_rect(color="black", size=.5))
-
