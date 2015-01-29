@@ -1,0 +1,1 @@
+f <- function() rnorm(10)
