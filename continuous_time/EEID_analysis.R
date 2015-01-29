@@ -23,9 +23,12 @@ source("helpers.R")
 source("symb_init.R")
 source("mpi_f.R")
 
-xx <- clusterCall(cl, mpi_f, nER=1, iter=1, maxt=100, nS=100, sig.s=1, H=100, 
-                  cells=100, a_pen=1, gamma=0.1)
-save(xx,file='test.rdata')
+xx <- clusterCall(cl, mpi_f, iter=1, nER=1, maxt=20, H=100, nS=100, 
+                  a_pen=1, sig.s=3, rs=.01, gamma=0, cells=100, 
+                  r=.4, d=.3, beta_d = 0, c=.001, phi=2)
+
+saveRDS(xx, file=paste(format(Sys.time(), "%b%d_%H:%M:%S"), 
+                        "_res.RData", sep=""))
 
 #Shutdown
 stopCluster(cl)
