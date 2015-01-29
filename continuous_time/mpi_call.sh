@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -N mpi_test
-#PBS -l walltime=19:00:00
-#PBS -l nodes=1:ppn=12
+#PBS -l walltime=00:01:00
+#PBS -l nodes=1:ppn=1
 
 #The following will also load dependent modules, incl openmpi
 module load R/r-3.0.1

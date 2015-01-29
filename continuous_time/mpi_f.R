@@ -145,3 +145,4 @@ if (check){
     theme(legend.position="bottom") + 
     theme(legend.background = element_rect(color="black", size=.5))
 }
+

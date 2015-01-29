@@ -1,9 +1,0 @@
-#!/bin/bash
-#SBATCH --job-name=Rmpi_hello
-#SBATCH --output=slurm.out
-#SBATCH --error=slurm.err
-#SBATCH --partition=develop
-#SBATCH --nodes=2
-#SBATCH --ntasks-per-node=4
-
-mpirun -np 1 R --no-save < hello.R 
