@@ -109,9 +109,9 @@ check <- FALSE
 
 if (check){
   
-  testout <- mpi_f(iter=1, nER=1, maxt=3, H=30, nS=30, 
-                   a_pen=1, sig.s=3, rs=.1, gamma=0, cells=200, 
-                   r=1, d=.3, beta_d = 0, c=.01, phi=5)
+  testout <- mpi_f(iter=1, nER=1, maxt=20, H=100, nS=100, 
+                   a_pen=1, sig.s=3, rs=.01, gamma=0, cells=100, 
+                   r=.4, d=.3, beta_d = 0, c=.001, phi=2)
   
   nsteps <- dim(testout$t)
   
