@@ -8,10 +8,22 @@ result <- mpi.remote.exec(paste("I am", id, "of", np, "running on", host))
 
 print(unlist(result))
 
-source("f.R")
-mpi.bcast.Robj2slave(f)
+# load functions on master 
+source("helpers.R")
+source("symb_init.R")
+source("host_init.R")
+source("mpi_f.R")
 
-res <- mpi.remote.exec(f())
+# send functions to slaves
+mpi.bcast.Robj2slave(ratefun)
+mpi.bcast.Robj2slave(transmit)
+mpi.bcast.Robj2slave(ABMstep)
+mpi.bcast.Robj2slave(symb_init)
+mpi.bcast.Robj2slave(host_init)
+mpi.bcast.Robj2slave(mpi_f)
+
+# execute
+res <- mpi.remote.exec(mpi_f())
 
 saveRDS(res, file=paste(format(Sys.time(), "%b%d_%H:%M:%S"), 
                        "_res.RData", sep=""))
