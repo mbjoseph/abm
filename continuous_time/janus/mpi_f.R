@@ -113,42 +113,49 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
               t=t,
               hosts=hosts, 
               symbionts=symbionts)
-  
+  class(res) <- "symb"
   return(res)
 }
+
+# declare plotting function
+plot.symb <- function(res){
+  library(scales)
+  library(ggplot2)
+  
+  nsteps <- dim(res$t)
+  par(mfrow=c(1, 2))
+  plot(x=res$t, y=res$s.ind[, 1], type="l", 
+       ylim=c(0, max(res$s.ind)), 
+       xlab="Time", ylab="Number of infected hosts")
+  for (k in 1:dim(res$s.ind)[2]){
+    lines(x=res$t, y=res$s.ind[, k], col=k + 2)
+  }
+  plot(x=res$t, y=res$n.ind[, 1], type="l", 
+       ylim=c(0, max(res$n.ind)), 
+       xlab="Time", 
+       ylab="Number of hosts")
+  
+  for (k in 1:dim(res$n.ind)[2]){
+    lines(x=res$t, y=res$n.ind[, k], col=k+2)
+  }
+  par(mfrow=c(1, 1))
+}
+
 
 check <- FALSE
 
 if (check){
-  system.time(testout <- mpi_f(iter=1, nER=1, maxt=5000, H=3, nS=3, 
+  system.time(testout <- mpi_f(iter=1, nER=1, maxt=10000, H=3, nS=3, 
                                a_pen=1, sig.s=50, rs=.1, gamma=0, cells=100, 
                                r=.4, d=.3, beta_d_min = -1, beta_d_max = 1, 
                                c=.001, phi=5)
     )
   
-  nsteps <- dim(testout$t)
+  # view timeseries
+  plot(testout)
   
-  library(scales)
-  library(ggplot2)
-  par(mfrow=c(1, 2))
-  plot(x=testout$t, y=testout$s.ind[, 1], type="l", 
-       ylim=c(0, max(testout$s.ind)), 
-       xlab="Time", ylab="Number of infected hosts")
-  for (k in 1:dim(testout$s.ind)[2]){
-    lines(x=testout$t, y=testout$s.ind[, k], col=k + 2)
-  }
-  plot(x=testout$t, y=testout$n.ind[, 1], type="l", 
-       ylim=c(0, max(testout$n.ind)), 
-       xlab="Time", 
-       ylab="Number of hosts")
-  
-  for (k in 1:dim(testout$n.ind)[2]){
-    lines(x=testout$t, y=testout$n.ind[, k], col=k+2)
-  }
-  par(mfrow=c(1, 1))
-  
+  # view niches
   testout$symbionts$sniche.d$Symbiont <- as.factor(testout$symbionts$sniche.d$symbiont.species)
-  
   ggplot(testout$symbionts$sniche.d, 
          aes(x=host.condition, y=Pr.estab)) + 
     geom_line(aes(col=Symbiont, group=Symbiont), size=2) + 
