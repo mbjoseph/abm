@@ -1,8 +1,13 @@
 # Post-JANUS analysis
-setwd("continuous_time")
 system("rsync --update -raz --progress majo3748@login.rc.colorado.edu:/projects/majo3748/abm/ ~/Documents/manuscripts/abm/continuous_time/")
-load("test.rdata")
-#load("sig_s2.rdata")
+
+# gather results
+data <- list.files(getwd(), pattern="Jan*")
+res <- list()
+for (i in 1:length(data)){
+  res[[i]] <- readRDS(data[i])
+}
+
 str(xx[[1]])
 ERvec <- rep(NA, length(xx))
 rich <- rep(NA, length(xx))
