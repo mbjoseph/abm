@@ -1,6 +1,8 @@
 mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10, 
-                  a_pen=1, sig.s=10, rs=.1, gamma=0.1, cells=100, 
-                  r=2, d=.1, beta_d = 0, c=.1, phi=5){
+                  a_pen=1, sig.s=10, rs=.1, gamma=0.1, 
+                  cells=100, r=2, d=.1, 
+                  beta_d_min=0, beta_d_max=0,
+                  c=.1, phi=5){
 
   # generate environmental ranges
   ER <- sample(seq(1, 100, by=.01), size = nER, replace=FALSE)
@@ -21,6 +23,7 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
   
   trans_bar <- array(dim=c(H, H, nS, nER, iter))
   rich_bar <- array(dim=c(nER, iter))
+  stored_beta_d <- c()
   
   for (i in 1:nER){
     for (j in 1:iter){
@@ -41,6 +44,9 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
       symbionts <- symb_init(H, S=nS, 
                              sEmin = Earray[i, 1], sEmax = Earray[i, 2], 
                              sERmin, sERmax, sig.s)
+      
+      # generate effects of infection on hosts
+      beta_d <- runif(1, beta_d_min, beta_d_max)
       
       # store parameters for later extraction
       pars <- list(r = r, d = d, c = c, beta_d = beta_d,
@@ -89,10 +95,12 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
       
       trans_bar[, , , i, j] <- transmitted
       rich_bar[i, j] <- mean(rich)
+      stored_beta_d <- c(stored_beta_d, beta_d)
     }  
   }
   return(list(trans_bar = trans_bar, 
               rich_bar = rich_bar, 
+              stored_beta_d = stored_beta_d,
               ER = ER, 
               Earray = Earray, 
               n.ind = n.ind, 
@@ -103,13 +111,13 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
   )
 }
 
-check <- FALSE
+check <- TRUE
 
 if (check){
-  
-  testout <- mpi_f(iter=1, nER=1, maxt=20, H=100, nS=100, 
-                   a_pen=1, sig.s=3, rs=.01, gamma=0, cells=100, 
-                   r=.4, d=.3, beta_d = 0, c=.001, phi=2)
+  testout <- mpi_f(iter=1, nER=1, maxt=50, H=3, nS=3, 
+                   a_pen=1, sig.s=50, rs=.1, gamma=0, cells=100, 
+                   r=.4, d=.3, beta_d_min = -1, beta_d_max = 1, 
+                   c=.001, phi=5)
   
   nsteps <- dim(testout$t)
   
