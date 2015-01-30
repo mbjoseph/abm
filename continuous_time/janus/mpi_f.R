@@ -23,7 +23,8 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
   
   trans_bar <- array(dim=c(H, H, nS, nER, iter))
   rich_bar <- array(dim=c(nER, iter))
-  stored_beta_d <- c()
+  stored_pars <- c()
+  timesteps <- c()
   
   for (i in 1:nER){
     for (j in 1:iter){
@@ -61,7 +62,8 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
       tau <- NULL
       
       pb <- txtProgressBar(min=0, max=maxt, style=3)
-      while(t[t.int] < maxt){
+      #while(t[t.int] < maxt){
+      while(t.int < maxt){
         ratelist <- ratefun(state, pars)
         rates <- unlist(ratelist)
         tot.rates <- sum(rates)
@@ -83,7 +85,7 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
         # update time
         t.int <- t.int + 1
         t[t.int] <- t[t.int - 1] + tau[t.int-1]
-        setTxtProgressBar(pb, t[t.int])
+        setTxtProgressBar(pb, t.int)
         n.ind <- rbind(n.ind, tabulate(state[1, ], nbins=H))
         s.ind <- rbind(s.ind, tabulate(state[2, ], nbins=nS))
       }
@@ -95,12 +97,15 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
       
       trans_bar[, , , i, j] <- transmitted
       rich_bar[i, j] <- mean(rich)
-      stored_beta_d <- c(stored_beta_d, beta_d)
+      stored_pars <- c(stored_pars, pars)
+      timesteps <- c(timesteps, t.int)
     }  
   }
-  return(list(trans_bar = trans_bar, 
+  
+  res <- list(trans_bar = trans_bar, 
               rich_bar = rich_bar, 
-              stored_beta_d = stored_beta_d,
+              stored_pars = stored_pars,
+              timesteps=timesteps,
               ER = ER, 
               Earray = Earray, 
               n.ind = n.ind, 
@@ -108,16 +113,18 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
               t=t,
               hosts=hosts, 
               symbionts=symbionts)
-  )
+  
+  return(res)
 }
 
-check <- TRUE
+check <- FALSE
 
 if (check){
-  testout <- mpi_f(iter=1, nER=1, maxt=50, H=3, nS=3, 
-                   a_pen=1, sig.s=50, rs=.1, gamma=0, cells=100, 
-                   r=.4, d=.3, beta_d_min = -1, beta_d_max = 1, 
-                   c=.001, phi=5)
+  system.time(testout <- mpi_f(iter=1, nER=1, maxt=5000, H=3, nS=3, 
+                               a_pen=1, sig.s=50, rs=.1, gamma=0, cells=100, 
+                               r=.4, d=.3, beta_d_min = -1, beta_d_max = 1, 
+                               c=.001, phi=5)
+    )
   
   nsteps <- dim(testout$t)
   
