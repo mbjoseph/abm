@@ -1,8 +1,8 @@
 # file to evaluate runtimes for various parameter combinations
-n.iter <- 20
+n.iter <- 50
 
-H <- 5
-nS <- 50
+H <- 20
+nS <- 20
 maxt <- 2000
 
 runtimes <- rep(NA, n.iter)
