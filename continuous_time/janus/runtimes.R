@@ -1,9 +1,9 @@
 # file to evaluate runtimes for various parameter combinations
-n.iter <- 50
+n.iter <- 5
 
-H <- 20
-nS <- 20
-maxt <- 2000
+H <- 50
+nS <- 50
+maxt <- 20000
 
 runtimes <- rep(NA, n.iter)
 timesteps <- rep(NA, n.iter)
@@ -18,6 +18,7 @@ for (i in 1:n.iter){
                              )["elapsed"]
   timesteps[i] <- testout$timesteps
   tmax[i] <- max(testout$t)
+  plot(testout)
 }
 
 pairs(~ runtimes + timesteps + tmax)
