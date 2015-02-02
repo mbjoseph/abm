@@ -8,4 +8,4 @@
 
 module load R/r-3.1.1
 
-mpirun -np 1 R --no-save < mpi.R 
+mpirun -np 1 R --no-save < mpi_call.R 
