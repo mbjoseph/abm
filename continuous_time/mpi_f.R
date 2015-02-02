@@ -1,9 +1,9 @@
 mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10, 
-                  a_pen=1, sig.s=10, rs=.1, gamma=0.1, cells=100, 
-                  r=2, d=.1, beta_d = 0, c=.1, phi=5){
-  source("symb_init.R")
-  source("host_init.R")
-  source("helpers.R")
+                  a_pen=1, sig.s=10, rs=.1, gamma=0.1, 
+                  cells=100, r=2, d=.1, 
+                  beta_d_min=0, beta_d_max=0,
+                  c=.1, phi=5){
+
   # generate environmental ranges
   ER <- sample(seq(1, 100, by=.01), size = nER, replace=FALSE)
   
@@ -23,6 +23,8 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
   
   trans_bar <- array(dim=c(H, H, nS, nER, iter))
   rich_bar <- array(dim=c(nER, iter))
+  stored_pars <- c()
+  timesteps <- c()
   
   for (i in 1:nER){
     for (j in 1:iter){
@@ -44,6 +46,9 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
                              sEmin = Earray[i, 1], sEmax = Earray[i, 2], 
                              sERmin, sERmax, sig.s)
       
+      # generate effects of infection on hosts
+      beta_d <- runif(1, beta_d_min, beta_d_max)
+      
       # store parameters for later extraction
       pars <- list(r = r, d = d, c = c, beta_d = beta_d,
                    phi = phi, a_pen = a_pen, rs = rs,
@@ -57,7 +62,8 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
       tau <- NULL
       
       pb <- txtProgressBar(min=0, max=maxt, style=3)
-      while(t[t.int] < maxt){
+      #while(t[t.int] < maxt){
+      while(t.int < maxt){
         ratelist <- ratefun(state, pars)
         rates <- unlist(ratelist)
         tot.rates <- sum(rates)
@@ -79,7 +85,7 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
         # update time
         t.int <- t.int + 1
         t[t.int] <- t[t.int - 1] + tau[t.int-1]
-        setTxtProgressBar(pb, t[t.int])
+        setTxtProgressBar(pb, t.int)
         n.ind <- rbind(n.ind, tabulate(state[1, ], nbins=H))
         s.ind <- rbind(s.ind, tabulate(state[2, ], nbins=nS))
       }
@@ -91,10 +97,15 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
       
       trans_bar[, , , i, j] <- transmitted
       rich_bar[i, j] <- mean(rich)
+      stored_pars <- c(stored_pars, pars)
+      timesteps <- c(timesteps, t.int)
     }  
   }
-  return(list(trans_bar = trans_bar, 
+  
+  res <- list(trans_bar = trans_bar, 
               rich_bar = rich_bar, 
+              stored_pars = stored_pars,
+              timesteps=timesteps,
               ER = ER, 
               Earray = Earray, 
               n.ind = n.ind, 
@@ -102,39 +113,46 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
               t=t,
               hosts=hosts, 
               symbionts=symbionts)
-  )
+  class(res) <- "symb"
+  return(res)
 }
+
+# declare plotting function
+plot.symb <- function(res){
+  library(scales)
+  library(ggplot2)
+  
+  nsteps <- dim(res$t)
+  par(mfrow=c(1, 2))
+  plot(x=res$t, y=res$s.ind[, 1], type="l", 
+       ylim=c(0, max(res$s.ind)), 
+       xlab="Time", ylab="Number of infected hosts")
+  for (k in 1:dim(res$s.ind)[2]){
+    lines(x=res$t, y=res$s.ind[, k], col=k + 2)
+  }
+  plot(x=res$t, y=res$n.ind[, 1], type="l", 
+       ylim=c(0, max(res$n.ind)), 
+       xlab="Time", 
+       ylab="Number of hosts")
+  
+  for (k in 1:dim(res$n.ind)[2]){
+    lines(x=res$t, y=res$n.ind[, k], col=k+2)
+  }
+  par(mfrow=c(1, 1))
+}
+
 
 check <- FALSE
 
 if (check){
+  system.time(testout <- mpi_f(iter=1, nER=1, maxt=500, H=100, nS=100, 
+                               sig.s=2))
   
-  testout <- mpi_f(iter=1, nER=1, maxt=20, H=100, nS=100, 
-                   a_pen=1, sig.s=3, rs=.01, gamma=0, cells=100, 
-                   r=.4, d=.3, beta_d = 0, c=.001, phi=2)
+  # view timeseries
+  plot(testout)
   
-  nsteps <- dim(testout$t)
-  
-  library(scales)
-  par(mfrow=c(1, 2))
-  plot(x=testout$t, y=testout$s.ind[, 1], type="l", 
-       ylim=c(0, max(testout$s.ind)), 
-       xlab="Time", ylab="Number of infected hosts")
-  for (k in 1:dim(testout$s.ind)[2]){
-    lines(x=testout$t, y=testout$s.ind[, k], col=k + 2)
-  }
-  plot(x=testout$t, y=testout$n.ind[, 1], type="l", 
-       ylim=c(0, max(testout$n.ind)), 
-       xlab="Time", 
-       ylab="Number of hosts")
-  
-  for (k in 1:dim(testout$n.ind)[2]){
-    lines(x=testout$t, y=testout$n.ind[, k], col=k+2)
-  }
-  par(mfrow=c(1, 1))
-  
+  # view niches
   testout$symbionts$sniche.d$Symbiont <- as.factor(testout$symbionts$sniche.d$symbiont.species)
-  
   ggplot(testout$symbionts$sniche.d, 
          aes(x=host.condition, y=Pr.estab)) + 
     geom_line(aes(col=Symbiont, group=Symbiont), size=2) + 

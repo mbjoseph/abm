@@ -17,6 +17,9 @@ module load slurm
 # qsub is backwards compatible
 qsub -q janus mpi_call.sh
 
+# or just use sbatch
+sbatch "JOBNAME"
+
 # check status
 squeue -u $USER
 
