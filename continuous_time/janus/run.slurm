@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --time=00:01:00
-#SBATCH --job-name=test
+#SBATCH --time=01:00:00
+#SBATCH --job-name=run
 #SBATCH --output=slurm.out
 #SBATCH --error=slurm.err
 #SBATCH --nodes=1
