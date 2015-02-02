@@ -23,40 +23,6 @@ sbatch "JOBNAME"
 # check status
 squeue -u $USER
 
-# onerun with 24 species works fine with a wall time of 7 hours
-# that's 7000 compute hours
-# we want to get 1000 iterations, so if we do three iterations per core
-
-# start with 100 iterations
-# so, with 5 X 12 = 60 processors
-# let's do 2 iterations on each
-# to get 120 iterations
-# so, up the wall time to 14 hours, and use 5 nodes X 12 ppn
-
-
-# How to submit an MPI job in R
-module load moab/moab-7.2.2
-module load torque/torque-4.2.3
-module load openmpi/openmpi-1.6.4_gcc-4.7.2_torque-4.2.3_ib
-module load openmpi/openmpi-1.8.0_intel-13.0.0
-module load userApps/jags
-
-qsub -q janus-small mpi_call.sh
-
-# one iteration with z.iter=500 took 3.5 hours
-# we want 1000 iterations = 3500 compute hours
-# 200 cores X 5 iterations per core = 1000 iterations
-# 5 iterations X 3.5 hours/iteration = 17.5 hours
-
-# need to go wider, maybe due to memory issues
-# so, what if we did 4 iterations per core
-# 4 iterations/core X 12 cores/node X 21 nodes = 1008 iterations
-# should be ~ 4 X 3.5 = 14 hours per core
-
-
-# check status
-showq -r -u majo3748
-
 # download a file
 scp majo3748@login.rc.colorado.edu:/projects/majo3748/joe_occ/covariate_dist/test.rdata ~/Desktop/
 scp majo3748@login.rc.colorado.edu:/projects/majo3748/abm/test.rdata ~/Documents/manuscripts/abm/continuous_time/
@@ -80,16 +46,3 @@ tar xzf XXX.tar.gz
 wget http://cran.r-project.org/src/contrib/rjags_3-13.tar.gz rjags_3-13.tar.gz
 tar xzf rjags_3-13.tar.gz
 R CMD INSTALL -l /home/majo3748/Rpackages rjags
-
-LDLFLAGS="-L/projects/majo3748/joe_occ/lapack-3.5.0"
-F77=gfortran
-
-module load gcc/gcc-4.8.2
-module load lapack/lapack-3.4.2
-cd build
-../configure --prefix=/projects/majo3748/joe_occ/JAGS-3.4.0/build --disable-shared
-make clean
-make install
-
-
-module load mkl/mkl-11.0.0
