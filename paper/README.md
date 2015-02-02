@@ -1,4 +1,4 @@
-CA grazing SEM manuscript
+Host-symbiont diversity paper
 ===========================================
 
 Here's the markdown files etc. to actually make the article. 
