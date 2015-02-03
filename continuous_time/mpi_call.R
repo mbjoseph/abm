@@ -10,8 +10,6 @@ print(unlist(result))
 
 # load functions on master 
 source("helpers.R")
-source("symb_init.R")
-source("host_init.R")
 source("mpi_f.R")
 
 # send functions to slaves
