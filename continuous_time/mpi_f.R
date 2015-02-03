@@ -118,10 +118,7 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
 }
 
 # declare plotting function
-plot.symb <- function(res){
-  library(scales)
-  library(ggplot2)
-  
+plot.symb <- function(res){  
   nsteps <- dim(res$t)
   par(mfrow=c(1, 2))
   plot(x=res$t, y=res$s.ind[, 1], type="l", 
