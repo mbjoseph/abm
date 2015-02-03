@@ -2,31 +2,37 @@
 system("rsync --update -raz --progress majo3748@login.rc.colorado.edu:/projects/majo3748/abm/ ~/Documents/manuscripts/abm/continuous_time/")
 
 # gather results
-data <- list.files(getwd(), pattern="Jan*")
+dir <- paste(getwd(), "/continuous_time", sep="")
+data <- list.files(dir, pattern="Feb*")
 res <- list()
 for (i in 1:length(data)){
-  res[[i]] <- readRDS(data[i])
+  res[[i]] <- readRDS(paste("continuous_time/", data[i], sep=""))
 }
 
-str(xx[[1]])
-ERvec <- rep(NA, length(xx))
-rich <- rep(NA, length(xx))
+str(res[[1]])
+it <- length(res[[1]]) * length(res)
+ERvec <- c()
+rich <- c()
 
-for (i in 1:length(xx)){
-  ERvec[i] <- xx[[i]]$ER
-  rich[i] <- xx[[i]]$rich_bar
+for (i in 1:length(res)){
+  for (j in 1:length(res[[i]])){
+    ERvec <- c(ERvec, res[[i]][[j]]$ER)
+    rich <- c(rich, res[[i]][[j]]$rich_bar)
+  }
 }
 
-svg("figs/sigs2.svg", width=9, height=4)
+#svg("figs/sigs2.svg", width=9, height=4)
 op <- par(mfrow=c(1, 2), mai=c(1.25, 1.25, .75, .75))
 
 # show intervals used
-ERlow <- rep(NA, length(xx))
-ERhigh <- rep(NA, length(xx))
+ERlow <- c()
+ERhigh <- c()
 
-for (i in 1:length(xx)){
-  ERlow[i] <- xx[[i]]$Earray[, 1]
-  ERhigh[i] <- xx[[i]]$Earray[, 2]
+for (i in 1:length(res)){
+  for (j in 1:length(res[[i]])){
+    ERlow <- c(ERlow, res[[i]][[j]]$Earray[, 1])
+    ERhigh <- c(ERhigh, res[[i]][[j]]$Earray[, 2])
+  }
 }
 
 ERd <- data.frame(ERvec, ERlow, ERhigh)
@@ -51,25 +57,25 @@ par(op)
 dev.off()
 
 # Calculate mean transmission rates within and among species
-win_bar <- rep(NA, length(xx))
-among_bar <- rep(NA, length(xx))
-all_bar <- rep(NA, length(xx))
+win_bar <- rep(NA, length(res[[1]]))
+among_bar <- rep(NA, length(res[[1]]))
+all_bar <- rep(NA, length(res[[1]]))
 
-nsymb <- dim(xx[[1]]$trans_bar)[3]
-nhosts <- dim(xx[[1]]$trans_bar)[1]
+nsymb <- dim(res[[1]][[1]]$trans_bar)[3]
+nhosts <- dim(res[[1]][[1]]$trans_bar)[1]
 
-for (i in 1:length(xx)){
+for (i in 1:length(res[[1]])){
   # gather within species data
   withind <- rep(NA, nsymb)
   for (j in 1:nsymb){
-    withind[j] <- sum(diag(xx[[i]]$trans_bar[, , j, ,])) / nhosts
+    withind[j] <- sum(diag(res[[1]][[i]]$trans_bar[, , j, ,])) / nhosts
   }
   win_bar[i] <- mean(withind)
   
   # do among species data
   amongd <- rep(NA, nsymb)
   for (j in 1:nsymb){
-    submat <- xx[[i]]$trans_bar[, , j, ,]
+    submat <- res[[1]][[i]]$trans_bar[, , j, ,]
     diag(submat) <- NA
     amongd[j] <- sum(submat, na.rm=T) / length(!is.na(submat))
   }
@@ -79,7 +85,7 @@ for (i in 1:length(xx)){
   for (j in 1:nsymb){
     alld <- rep(NA, nsymb)
     for (j in 1:nsymb){
-      submat <- xx[[i]]$trans_bar[, , j, ,]
+      submat <- res[[1]][[i]]$trans_bar[, , j, ,]
       alld[j] <- sum(submat) / nhosts ^ 2
     }
     all_bar[i] <- mean(alld)
@@ -87,10 +93,10 @@ for (i in 1:length(xx)){
 }
 
 # Characterize and plot mean prevalence for each symbiont X each iteration
-prev <- array(dim=c(nsymb, length(xx)))
+prev <- array(dim=c(nsymb, length(res[[1]])))
 for (i in 1:nsymb){
-  for (j in 1:length(xx)){
-    prev.series <- xx[[j]]$s.ind[, i] / 100 # 100 cells
+  for (j in 1:length(res[[1]])){
+    prev.series <- res[[1]][[j]]$s.ind[, i] / 100 # 100 cells
     prev[i, j] <- mean(prev.series)
   }
 }
@@ -102,14 +108,14 @@ plot(ERvec, all_bar,
      ylab="Mean transmission rate")
 
 jitt <- .5
-plot(x = ERvec + runif(length(xx), -jitt, jitt), 
+plot(x = ERvec + runif(length(res[[1]]), -jitt, jitt), 
      y = prev[1, ], 
      ylim=c(0, max(prev)), 
      col=ifelse(prev[1, ] == 0, "lightgray", "black"), 
      xlab="Host functional diversity", 
      ylab="Symbiont prevalence")
 for (i in 2:nsymb){
-  points(x = ERvec + runif(length(xx), -jitt, jitt), 
+  points(x = ERvec + runif(length(res[[1]]), -jitt, jitt), 
          y = prev[i, ], 
          col=ifelse(prev[i, ] == 0, "red", "blue"))
 }
@@ -120,10 +126,10 @@ par(op)
 dev.off()
 
 
-str(xx[[1]])
-plot(xx[[1]]$t, xx[[1]]$s.ind[, 1], type="l", ylim=c(0, max(xx[[1]]$s.ind)))
-for (i in 1:length(xx)){
-  for (j in 1:dim(xx[[1]]$s.ind)[2]){
-    lines(xx[[i]]$t, xx[[i]]$s.ind[, j], col=j)
+str(res[[1]][[1]])
+plot(res[[1]][[1]]$t, res[[1]][[1]]$s.ind[, 1], type="l", ylim=c(0, max(res[[1]][[1]]$s.ind)))
+for (i in 1:length(res[[1]])){
+  for (j in 1:dim(res[[1]][[1]]$s.ind)[2]){
+    lines(res[[1]][[i]]$t, res[[1]][[i]]$s.ind[, j], col=j)
   }
 }
