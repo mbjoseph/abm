@@ -42,6 +42,10 @@ Results
 Discussion
 --------------------------------------------------------
 
+See Dunn et al. 2010 for non-linear relationship
+
+See Rotstock et al. 2014 for similar resolution of paradox
+
 Conclusion
 ------------------
 
