@@ -1,4 +1,7 @@
 # Post-JANUS analysis
+library(ggplot2)
+library(gridExtra)
+
 system("rsync --update -raz --progress majo3748@login.rc.colorado.edu:/projects/majo3748/abm/ ~/Documents/manuscripts/abm/continuous_time/")
 
 # gather results
@@ -13,16 +16,19 @@ str(res[[1]])
 it <- length(res[[1]]) * length(res)
 ERvec <- c()
 rich <- c()
+beta_d <- c()
+sig_s <- c()
 
 for (i in 1:length(res)){
   for (j in 1:length(res[[i]])){
     ERvec <- c(ERvec, res[[i]][[j]]$ER)
     rich <- c(rich, res[[i]][[j]]$rich_bar)
+    beta_d <- c(beta_d, res[[i]][[j]]$stored_pars$beta_d)
+    sig_s <- c(sig_s, res[[i]][[j]]$stored_pars$sig_s)
   }
 }
 
 #svg("figs/sigs2.svg", width=9, height=4)
-op <- par(mfrow=c(1, 2), mai=c(1.25, 1.25, .75, .75))
 
 # show intervals used
 ERlow <- c()
@@ -35,26 +41,23 @@ for (i in 1:length(res)){
   }
 }
 
-ERd <- data.frame(ERvec, ERlow, ERhigh)
+ERd <- data.frame(ERvec, ERlow, ERhigh, rich, beta_d)
 ERd <- ERd[order(ERd$ERvec), ]
 
-plot(x=rep(ERd$ERvec[1], 2), y=c(ERd$ERlow[1], ERd$ERhigh[1]), 
-     xlim=range(ERvec), ylim=c(min(ERlow), max(ERhigh)), 
-     type="l", 
-     xlab="Host functional diversity", 
-     ylab="Within-host environment range", 
-     #xaxt="n"
-     )
-for (i in 2:nrow(ERd)){
-  lines(x=rep(ERd$ERvec[i], 2), y=c(ERd$ERlow[i], ERd$ERhigh[i]))
-}
-par(mai=c(1.25, 1, .75, .75))
-plot(ERvec, rich, 
-     xlab="Host functional diversity", 
-     ylab="Mean symbiont richness")
+p1 <- ggplot(ERd) + 
+  geom_segment(aes(x=ERvec, xend=ERvec, y=ERlow, yend=ERhigh)) + 
+  xlab("Host functional diversity") + 
+  ylab("Local range of within-host environments") + 
+  theme_bw()
 
-par(op)
-dev.off()
+p2 <- ggplot(ERd) + 
+  geom_point(aes(x=ERvec, y=rich), shape=1)+ 
+  xlab("Host functional diversity") + 
+  ylab("Mean symbiont richness") + 
+  theme_bw()
+
+grid.arrange(p2, p1, ncol=1)
+#dev.off()
 
 # Calculate mean transmission rates within and among species
 win_bar <- rep(NA, length(res[[1]]))

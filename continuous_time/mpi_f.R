@@ -52,6 +52,7 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
       # store parameters for later extraction
       pars <- list(r = r, d = d, c = c, beta_d = beta_d,
                    phi = phi, a_pen = a_pen, rs = rs,
+                   sig.s = sig.s,
                    cells = cells, H=H, nS=nS,
                    gamma= gamma, 
                    hosts=hosts,
@@ -117,7 +118,7 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
   return(res)
 }
 
-# declare plotting function
+# declare plotting functions
 plot.symb <- function(res){  
   nsteps <- dim(res$t)
   par(mfrow=c(1, 2))
@@ -143,16 +144,15 @@ check <- FALSE
 
 if (check){
   system.time(testout <- mpi_f(iter=1, nER=1, maxt=500, H=100, nS=100, 
-                               sig.s=2))
+                               sig.s=1))
   
   # view timeseries
   plot(testout)
   
   # view niches
-  testout$symbionts$sniche.d$Symbiont <- as.factor(testout$symbionts$sniche.d$symbiont.species)
   ggplot(testout$symbionts$sniche.d, 
          aes(x=host.condition, y=Pr.estab)) + 
-    geom_line(aes(col=Symbiont, group=Symbiont), size=2) + 
+    geom_line(aes(col=factor(symbiont.species), group=factor(symbiont.species)), size=2) + 
     theme_classic() + 
     geom_rug(sides="b") +
     xlab("Within-host condition") + 
