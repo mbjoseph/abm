@@ -21,7 +21,7 @@ mpi.bcast.Robj2slave(host_init)
 mpi.bcast.Robj2slave(mpi_f)
 
 # execute
-res <- mpi.remote.exec(mpi_f(maxt=50000, nS=100, H=100, sig.s=1))
+res <- mpi.remote.exec(mpi_f(maxt=50000, nS=100, H=100, sig.s=.5))
 
 saveRDS(res, file=paste(format(Sys.time(), "%b%d_%H:%M:%S"), 
                        "_res.RData", sep=""))

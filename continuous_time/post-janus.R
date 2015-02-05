@@ -50,11 +50,11 @@ p1 <- ggplot(ERd) +
   ylab("Local range of within-host environments") + 
   theme_bw()
 
-p2 <- ggplot(ERd) + 
-  geom_point(aes(x=ERvec, y=rich), shape=1)+ 
+p2 <- ggplot(ERd, aes(x=ERvec, y=rich)) + 
+  geom_point(shape=1)+ 
   xlab("Host functional diversity") + 
   ylab("Mean symbiont richness") + 
-  theme_bw()
+  theme_bw() #+ stat_smooth(method="lm", formula = y ~ x + I(x^2))
 
 grid.arrange(p2, p1, ncol=1)
 #dev.off()

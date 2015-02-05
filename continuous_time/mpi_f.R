@@ -144,7 +144,7 @@ check <- FALSE
 
 if (check){
   system.time(testout <- mpi_f(iter=1, nER=1, maxt=500, H=100, nS=100, 
-                               sig.s=1))
+                               sig.s=.4))
   
   # view timeseries
   plot(testout)
