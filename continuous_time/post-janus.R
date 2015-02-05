@@ -5,60 +5,63 @@ library(gridExtra)
 system("rsync --update -raz --progress majo3748@login.rc.colorado.edu:/projects/majo3748/abm/ ~/Documents/manuscripts/abm/continuous_time/")
 
 # gather results
-dir <- paste(getwd(), "/continuous_time", sep="")
+dir <- paste(getwd(), "/continuous_time/results", sep="")
 data <- list.files(dir, pattern="Feb*")
-res <- list()
-for (i in 1:length(data)){
-  res[[i]] <- readRDS(paste("continuous_time/", data[i], sep=""))
-}
 
-str(res[[1]])
-it <- length(res[[1]]) * length(res)
+# initialize vectors
 ERvec <- c()
+ERlow <- c()
+ERhigh <- c()
 rich <- c()
 beta_d <- c()
 sig_s <- c()
 
-for (i in 1:length(res)){
-  for (j in 1:length(res[[i]])){
-    ERvec <- c(ERvec, res[[i]][[j]]$ER)
-    rich <- c(rich, res[[i]][[j]]$rich_bar)
-    beta_d <- c(beta_d, res[[i]][[j]]$stored_pars$beta_d)
-    sig_s <- c(sig_s, res[[i]][[j]]$stored_pars$sig_s)
+# read data
+for (i in 1:length(data)){ # each node result
+  d <- readRDS(paste("continuous_time/", data[i], sep=""))
+  for (j in 1:length(d)){
+    # catch errors (only occur at small niche widths...?)
+    if (class(d[[j]]) == "try-error"){
+      print(paste("try-error at node ", i, ", cpu ", j))
+      next 
+    } else { # otherwise, extract values
+      ERvec <- c(ERvec, d[[j]]$ER)
+      ERlow <- c(ERlow, d[[j]]$Earray[, 1])
+      ERhigh <- c(ERhigh, d[[j]]$Earray[, 2])
+      rich <- c(rich, d[[j]]$rich_bar)
+      beta_d <- c(beta_d, d[[j]]$stored_pars$beta_d)
+      if (is.null(d[[j]]$stored_pars$sig.s)) { # early iterations need fix
+        d[[j]]$stored_pars$sig.s <- 1
+      }
+      sig_s <- c(sig_s, d[[j]]$stored_pars$sig.s)
+    }
   }
+  rm(d) # remove to conserve RAM
 }
 
-#svg("figs/sigs2.svg", width=9, height=4)
-
-# show intervals used
-ERlow <- c()
-ERhigh <- c()
-
-for (i in 1:length(res)){
-  for (j in 1:length(res[[i]])){
-    ERlow <- c(ERlow, res[[i]][[j]]$Earray[, 1])
-    ERhigh <- c(ERhigh, res[[i]][[j]]$Earray[, 2])
-  }
-}
-
-ERd <- data.frame(ERvec, ERlow, ERhigh, rich, beta_d)
+# combine in data.frame
+ERd <- data.frame(ERvec, ERlow, ERhigh, rich, beta_d, sig_s)
 ERd <- ERd[order(ERd$ERvec), ]
 
 p1 <- ggplot(ERd) + 
   geom_segment(aes(x=ERvec, xend=ERvec, y=ERlow, yend=ERhigh)) + 
+  facet_wrap(~sig_s) + 
   xlab("Host functional diversity") + 
   ylab("Local range of within-host environments") + 
   theme_bw()
 
 p2 <- ggplot(ERd, aes(x=ERvec, y=rich)) + 
+  facet_wrap(~sig_s) +
   geom_point(shape=1)+ 
   xlab("Host functional diversity") + 
   ylab("Mean symbiont richness") + 
-  theme_bw() #+ stat_smooth(method="lm", formula = y ~ x + I(x^2))
+  theme_bw() + stat_smooth(method="lm", formula = y ~ x + I(x^2))
 
 grid.arrange(p2, p1, ncol=1)
 #dev.off()
 
+ 
+# end applicable code (so far) for dynamic host communities
 # Calculate mean transmission rates within and among species
 win_bar <- rep(NA, length(res[[1]]))
 among_bar <- rep(NA, length(res[[1]]))
