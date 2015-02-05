@@ -1,0 +1,59 @@
+(title slide)
+
+Introduction
+- Diversity and disease an important, and perhaps a little bit controversial, research area in contemporary disease ecology
+  (slide 2)
+- Reluctance to use protection from disease as justification for biodiversity conservation
+- Evidence for biodiversity having variable effects on disease risk (slide 3 Wood pie chart), 
+- Disease risk has been described in multiple ways 
+  (human risk of zoonotic infection, the intensity of parasite transmission, parasite prevalence, density of infected vectors, to name a few)
+  (slide 4)
+- The controversy around whether disease risk increases or decreases with disease risk has highlighted the importance of being specific when defining terms, as the multiple definitions of disease risk has caused multiple points of contention.
+
+Segway into topic
+- Here, I'll focus on one that emerges from two divergent perspectives:
+- that on the one hand, diverse host communities are likely to harbor diverse parasite communities 
+  (slide 5, show figure from Morand)
+- and that on the other hand, particularly when total host density is fixed (and we are only altering host diversity), that increases in host diversity *can* reduce transmission (notice here, I am not making a universal claim, but rather I am merely citing this as one possible outcome, or note italics)
+   (slide 6, show figure from Venesky or Lacroix)
+- If both these patterns are true, we might expect that diversity increases disease risk by providing more diverse pool of potential infectious agents, but also decreases the risk of becoming exposed to each type of agent by reducing transmission
+   (slide 7, showing both figures)
+- Using a simple model, I will argue that this apparent contradiction arises primarily from ambiguous definitions of disease risk rather than any paradox inherent in multi-host, multi-parasite systems.
+
+Model structure
+- Regional symbiont pool (slide 8, Gaussian niche space, niche overlap, generalists & specialists)
+- Why symbionts?
+   - make case that limiting perspective to parasites is less useful than developing a framework to incorporate other varieties of symbionts, for which we can collect massive amounts of data quickly
+   (slide 9)
+- Local host community (slide 10, no births & deaths, hosts can transmit and recover, no co-infection/strong competetion, no displacement, no cost of infection, finite host community, show figure to explain how hosts fall on axis)
+- Overall figure (slide 11)
+
+Analysis
+- Vary functional diversity (slide 12, explain how)
+- Iteratively simulate local infeciton trajectories (slide 13, show figure)
+- Quantify symbiont richness & transmission
+
+Results
+1. Functional diversity determines whether symbionts attempting to colonize from regional pool can establish an infection
+(slide 14, show figure)
+2. Functional diversity determines rates of local transmission
+(slide 15, show figure)
+
+(slide 16, return to prediction slide)
+
+Take home messages
+1. Host diversity could facilitate symbiont diversity while limiting transmission
+2. Expectations for low diversity host communities vs. high diversity host communities
+3. "Disease risk" integrates many factors, including focal host choice, transmission potential, susceptibility, and the diversity of infectious agents
+  - even if management was possible, would it be wise to manage for fewer agents with high transmission, or more agents with lower transmission?
+  (slide 17)
+4. Across a very broad range of host diversity, one might expect to see a unimodal symbiont richness relationship (explain why), similar to the habitat-area-heterogeneity trade-off in free-living species. (slide 18)
+
+(slide 19, Acknowledgements)
+
+(slide 20, Questions)
+
+Future directions
+1. Explore sensitivity of model predictions to costs & benefits of infection: do the same patterns hold for parasites and mutualists? 
+2. Explore sensity to co-infection: do unlimited concomitant infections affect predicitons? 
+3. Evaluate empirical evidence across multi-host, multi-symbiont systems, including non-disease systems
