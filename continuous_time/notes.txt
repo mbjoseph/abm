@@ -9,7 +9,7 @@ cd /projects/majo3748/abm
 rsync --update -raz --progress majo3748@login.rc.colorado.edu:/projects/majo3748/abm/ ~/Documents/manuscripts/abm/continuous_time/
 
 # push up files to janus
-rsync --update -raz --progress ~/Documents/manuscripts/abm/continuous_time/ majo3748@login.rc.colorado.edu:/projects/majo3748/abm/
+rsync --exclude 'results' --update -raz --progress ~/Documents/manuscripts/abm/continuous_time/ majo3748@login.rc.colorado.edu:/projects/majo3748/abm/
 
 
 module load slurm
