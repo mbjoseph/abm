@@ -1,4 +1,8 @@
-abm
+abm: Dynamic multi-host multi-symbiont model
 ===
 
-Landscape-host-parasite model
+Directories:
+- continuous_time: continuous time implementation
+- paper: manuscript files
+- presentation: talks and posters
+- snapshot: saved analysis of static host model from 2014 EEID conference
