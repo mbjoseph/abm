@@ -18,7 +18,7 @@ sig_s <- c()
 
 # read data
 for (i in 1:length(data)){ # each node result
-  d <- readRDS(paste("continuous_time/", data[i], sep=""))
+  d <- readRDS(paste("continuous_time/results/", data[i], sep=""))
   for (j in 1:length(d)){
     # catch errors (only occur at small niche widths...?)
     if (class(d[[j]]) == "try-error"){
