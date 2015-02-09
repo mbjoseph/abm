@@ -37,6 +37,7 @@ for (i in 1:length(data)){ # each node result
     }
   }
   rm(d) # remove to conserve RAM
+  print(paste("Completed", i, "of", length(data)))
 }
 
 # combine in data.frame
