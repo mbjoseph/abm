@@ -143,8 +143,10 @@ plot.symb <- function(res){
 check <- FALSE
 
 if (check){
-  system.time(testout <- mpi_f(iter=1, nER=1, maxt=500, H=100, nS=100, 
-                               sig.s=20))
+  system.time(testout <- mpi_f(cells=100, iter=1, nER=1, 
+                               maxt=50000, H=3, nS=3, 
+                               sig.s=10, gamma=0, phi=2, 
+                               beta_d_min=1, beta_d_max=1))
   
   # view timeseries
   plot(testout)
