@@ -44,24 +44,61 @@ for (i in 1:length(data)){ # each node result
 ERd <- data.frame(ERvec, ERlow, ERhigh, rich, beta_d, sig_s)
 ERd <- ERd[order(ERd$ERvec), ]
 
-p1 <- ggplot(ERd) + 
+
+# plot effect of functional diversity for commensal symbionts
+commensals <- subset(ERd, beta_d==0)
+p1 <- ggplot(commensals) + 
   geom_segment(aes(x=ERvec, xend=ERvec, y=ERlow, yend=ERhigh)) + 
   facet_wrap(~sig_s) + 
   xlab("Host functional diversity") + 
   ylab("Local range of within-host environments") + 
   theme_bw()
 
-p2 <- ggplot(ERd, aes(x=ERvec, y=rich)) + 
+p2 <- ggplot(commensals, aes(x=ERvec, y=rich)) + 
   facet_wrap(~sig_s) +
   geom_point(shape=1)+ 
   xlab("Host functional diversity") + 
   ylab("Mean symbiont richness") + 
-  theme_bw() + stat_smooth(method="lm", formula = y ~ x + I(x^2))
+  theme_bw() + 
+  stat_smooth(method="lm", formula = y ~ x + I(x^2))
 
 grid.arrange(p2, p1, ncol=1)
 #dev.off()
 
  
+# make surface plot showing effect of functional div & infection eff
+eff_d <- subset(ERd, sig_s == 1)
+library(scales)
+ggplot(eff_d, aes(x=ERvec, y=beta_d)) + 
+  geom_point(aes(color=rich), size=4, alpha=.5) + 
+  scale_colour_gradient2(mid="blue", high="red") +
+  theme_bw()
+
+
+mod <- lm(rich ~ ERvec * beta_d + I(ERvec^2))
+coefs <- coef(mod)
+
+x1 <- 0:100
+x2 <- seq(-1, 1, length.out=100)
+X <- expand.grid(x1=x1, x2=x2)
+
+mu <- with(X, coefs[1] + coefs[2] * x1 + coefs[3] * x2 + 
+             coefs[4] * x1^2 + coefs[5] * x1 * x2)
+
+require(ggplot2)
+d <- data.frame(mu=mu, x1=X$x1, x2=X$x2)
+p1 <- ggplot(d, aes(x1, x2, z=mu)) + theme_bw() +
+  geom_tile(aes(fill=mu)) +
+  stat_contour(binwidth=1.5) +
+  scale_fill_gradient2(low="blue", mid="white", high="orange") +
+  xlab("Covariate 1") + ylab("Covariate 2") +
+  ggtitle("Contour plot of the linear predictor")
+p1
+
+
+library(Rcmdr)
+scatter3d(x=X$x1, z=X$x2, y=mu, data=d)
+
 # end applicable code (so far) for dynamic host communities
 # Calculate mean transmission rates within and among species
 win_bar <- rep(NA, length(res[[1]]))
