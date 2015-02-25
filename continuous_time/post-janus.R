@@ -4,6 +4,8 @@ library(gridExtra)
 
 system("rsync --update -raz --progress majo3748@login.rc.colorado.edu:/projects/majo3748/abm/ ~/Documents/manuscripts/abm/continuous_time/")
 
+system("mv Feb* results")
+
 # gather results
 dir <- paste(getwd(), "/continuous_time/results", sep="")
 data <- list.files(dir, pattern="Feb*")
@@ -15,6 +17,7 @@ ERhigh <- c()
 rich <- c()
 beta_d <- c()
 sig_s <- c()
+phi <- c()
 
 # read data
 for (i in 1:length(data)){ # each node result
@@ -34,6 +37,7 @@ for (i in 1:length(data)){ # each node result
         d[[j]]$stored_pars$sig.s <- 1
       }
       sig_s <- c(sig_s, d[[j]]$stored_pars$sig.s)
+      phi <- c(phi, d[[j]]$stored_pars$phi)
     }
   }
   rm(d) # remove to conserve RAM
@@ -41,12 +45,12 @@ for (i in 1:length(data)){ # each node result
 }
 
 # combine in data.frame
-ERd <- data.frame(ERvec, ERlow, ERhigh, rich, beta_d, sig_s)
+ERd <- data.frame(ERvec, ERlow, ERhigh, rich, beta_d, sig_s, phi)
 ERd <- ERd[order(ERd$ERvec), ]
 
 
 # plot effect of functional diversity for commensal symbionts
-commensals <- subset(ERd, beta_d==0)
+commensals <- subset(ERd, beta_d==0 & phi == 5)
 p1 <- ggplot(commensals) + 
   geom_segment(aes(x=ERvec, xend=ERvec, y=ERlow, yend=ERhigh)) + 
   facet_wrap(~sig_s) + 
@@ -67,7 +71,7 @@ grid.arrange(p2, p1, ncol=1)
 
  
 # make surface plot showing effect of functional div & infection eff
-eff_d <- subset(ERd, sig_s == 1)
+eff_d <- subset(ERd, sig_s == 1 & phi == 5)
 library(scales)
 ggplot(eff_d, aes(x=ERvec, y=beta_d)) + 
   geom_point(aes(color=rich), size=4, alpha=.5) + 
@@ -96,8 +100,22 @@ p1 <- ggplot(d, aes(x1, x2, z=mu)) + theme_bw() +
 p1
 
 
-library(Rcmdr)
-scatter3d(x=X$x1, z=X$x2, y=mu, data=d)
+
+## plot diversity-richness relationship for symbionts with varying transmission rates
+td <- subset(ERd, beta_d == 0)
+
+ggplot(td, aes(x=ERvec, y=rich, color=factor(phi))) + 
+  facet_wrap(~sig_s) +
+  geom_point(shape=1)+ 
+  xlab("Host functional diversity") + 
+  ylab("Mean symbiont richness") + 
+  theme_bw() + 
+  stat_smooth(method="lm", formula = y ~  x + I(x^2))
+
+
+
+
+
 
 # end applicable code (so far) for dynamic host communities
 # Calculate mean transmission rates within and among species
