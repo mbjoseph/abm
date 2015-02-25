@@ -29,10 +29,15 @@ ratefun <- function(state, params){
          birth = ifelse(X > 0, r, 0),
          death = ifelse(X > 0, d * (1 + beta_d * (S > 0)), 0),
          colon = ifelse(X == 0, c * H, 0), 
-         cntct = ifelse(S > 0, phi * (sum(X > 0 & S == 0)), 0), 
-         # could incorporate a_pen here, to avoid unrealized contacts
          rains = ifelse((X > 0 & S == 0), rs * nS, 0), 
-         recov = ifelse((X > 0 & S > 0), gamma, 0)
+         recov = ifelse((X > 0 & S > 0), gamma, 0),
+         cntct = ifelse(sum(X) == 0, 0, 
+                        ifelse(mode == "density", 
+                          phi * sum(X > 0 & S == 0) * sum(X>0 & S > 0), # dd
+                          phi * sum(X > 0 & S == 0) * sum(X>0 & S > 0) / sum(X>0) # fd
+                          )
+                        )
+         # could incorporate a_pen here, to avoid unrealized contacts
        )
        )
 }
@@ -66,7 +71,14 @@ ABMstep <- function(state, action, cell, params, transmitted){
     }
   }
   if (action == "cntct"){
-    # find individual for host to contact
+    # find S and I hosts at random (proportional to abundance)
+    Iindivs <- which(state[1, ] > 0 & state[2, ] > 0)
+    if (length(Iindivs) == 1){
+      cell <- Iindivs
+    } else {
+      cell <- sample(Iindivs, size=1)
+    }
+    
     Sindivs <- which(state[1, ] > 0 & state[2, ] == 0)
     if (length(Sindivs) == 1){
       ind_contacted <- Sindivs

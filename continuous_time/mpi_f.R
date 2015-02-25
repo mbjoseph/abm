@@ -2,7 +2,8 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
                   a_pen=1, sig.s=10, rs=.1, gamma=0.1, 
                   cells=100, r=2, d=.1, 
                   beta_d_min=0, beta_d_max=0,
-                  c=.1, phi=5){
+                  c=.1, phi=5, mode="dens"){
+  stopifnot(mode == "dens" | mode == "freq")
 
   # generate environmental ranges
   ER <- sample(seq(1, 100, by=.01), size = nER, replace=FALSE)
@@ -32,8 +33,8 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
       state <- array(0, dim=c(2, cells))
       n.ind <- array(0, dim=c(1, H))
       s.ind <- array(0, dim=c(1, nS))
-      rnames <- rep(c("birth", "death", "colon", "cntct", "rains", "recov"), 
-                    each=cells)
+      rnames <- c(rep(c("birth", "death", "colon", "rains", "recov"), 
+                    each=cells), "cntct")
       ntrans <- length(rnames)
       transctr <- rep(0, ntrans) # transition counter
       transmitted <- array(0, dim=c(H, H, nS))
@@ -56,9 +57,11 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
                    cells = cells, H=H, nS=nS,
                    gamma= gamma, 
                    hosts=hosts,
-                   symbionts=symbionts)
+                   symbionts=symbionts, 
+                   mode=mode)
       
       t <- 0
+      t.out <- 0
       t.int <- 1
       tau <- NULL
       
@@ -74,21 +77,27 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
         event <- sample(1:ntrans, size=1, prob=rates)
         f_name <- names(rates[event])
         event_type <- rnames[event]
-        cell_num <- event - cells * (which(names(ratelist) == event_type) - 1)
+        if (event_type=="cntct"){
+          cell_num <- NA
+        } else {
+          cell_num <- event - cells * (which(names(ratelist) == event_type) - 1)
+        }
         
         # carry out action on chosen cell
         nextstep <- ABMstep(state, event_type, cell_num, 
                             params=pars, transmitted)
-        state <- nextstep$state
-        transctr[event] <- transctr[event] + nextstep$counter
-        transmitted <- nextstep$transmitted
         
         # update time
         t.int <- t.int + 1
         t[t.int] <- t[t.int - 1] + tau[t.int-1]
+        
+        if (!all(state == nextstep$state)){
+          state <- nextstep$state
+          n.ind <- rbind(n.ind, tabulate(state[1, ], nbins=H))
+          s.ind <- rbind(s.ind, tabulate(state[2, ], nbins=nS))
+          t.out <- c(t.out, t[t.int])
+        }
         setTxtProgressBar(pb, t.int)
-        n.ind <- rbind(n.ind, tabulate(state[1, ], nbins=H))
-        s.ind <- rbind(s.ind, tabulate(state[2, ], nbins=nS))
       }
       
       rich <- rep(NA, dim(s.ind)[1])
@@ -111,7 +120,7 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
               Earray = Earray, 
               n.ind = n.ind, 
               s.ind = s.ind,
-              t=t,
+              t=t.out,
               hosts=hosts, 
               symbionts=symbionts)
   class(res) <- "symb"
@@ -144,13 +153,15 @@ check <- FALSE
 
 if (check){
   system.time(testout <- mpi_f(cells=100, iter=1, nER=1, 
-                               maxt=50000, H=3, nS=3, 
-                               sig.s=10, gamma=0, phi=2, 
-                               beta_d_min=1, beta_d_max=1))
+                               maxt=50000, H=2, nS=2, rs=2,
+                               sig.s=500, gamma=0, phi=10000, 
+                               beta_d_min=50, beta_d_max=50, 
+                               mode="freq"))
   
   # view timeseries
   plot(testout)
-  
+
+  library(ggplot2)
   # view niches
   ggplot(testout$symbionts$sniche.d, 
          aes(x=host.condition, y=Pr.estab)) + 
