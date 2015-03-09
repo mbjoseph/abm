@@ -153,8 +153,8 @@ check <- FALSE
 
 if (check){
   system.time(testout <- mpi_f(cells=100, iter=1, nER=1, 
-                               maxt=50000, H=2, nS=2, rs=2,
-                               sig.s=500, gamma=0, phi=10000, 
+                               maxt=500, H=20, nS=2, rs=2,
+                               sig.s=.0009, gamma=0, phi=10000, 
                                beta_d_min=50, beta_d_max=50, 
                                mode="freq"))
   

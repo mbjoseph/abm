@@ -182,7 +182,7 @@ symb_init <- function(H, S, sEmin, sEmax, sERmin, sERmax, sig.s){
     integrand <- function(Xe) {
       exp(-((Xe - mu.s[i]) ^ 2) / (2 * sigma.s[i] ^ 2))
     }
-    res <- integrate(integrand, lower=sERmin, upper=sERmax)
+    res <- integrate(integrand, lower=sERmin, upper=sERmax, subdivisions=1000L)
     sZ[i] <- 1 / res$value
   }
   
@@ -205,18 +205,17 @@ symb_init <- function(H, S, sEmin, sEmax, sERmin, sERmax, sig.s){
 # test 
 check <- FALSE
 if (check) { 
-  out <- symb_init(H=1000, S=9, sEmin=-50, sEmax=50, sERmin=-50, sERmax=50, sig.s=4)
-  exER <- data.frame(host.condition = runif(50, -30, 0))
+  out <- symb_init(H=100, S=100, sEmin=-100, sEmax=100, sERmin=-100, sERmax=100, sig.s=1)
+#  out$Pcol
   out$sniche.d$Symbiont <- as.factor(out$sniche.d$symbiont.species)
   
   ggplot(out$sniche.d, aes(x=host.condition, y=Pr.estab)) + 
-    geom_line(aes(col=Symbiont, group=Symbiont), size=2) + 
+    geom_line(aes(group=Symbiont), size=1) + 
     theme_classic() + 
-    geom_point(data=exER, aes(x=host.condition, y=-.01), pch="|", size=4) + 
+    geom_point(aes(x=host.condition, y=-.01), pch="|", size=4) + 
     xlab("Within-host condition") + 
     ylab("Probability of establishment") + 
     theme(legend.position="bottom") + 
-    theme(legend.background = element_rect(color="black", size=.5)) + 
-    scale_colour_brewer(palette="Set1")
+    theme(legend.background = element_rect(color="black", size=.5)) 
 }
 
