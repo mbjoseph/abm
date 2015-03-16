@@ -37,8 +37,7 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
                     each=cells), "cntct")
       ntrans <- length(rnames)
       transctr <- rep(0, ntrans) # transition counter
-      transmitted <- array(0, dim=c(H, H, nS))
-      
+
       # initialize host community
       hosts <- host_init(cells, H, pcol=1)
       
@@ -85,7 +84,7 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
         
         # carry out action on chosen cell
         nextstep <- ABMstep(state, event_type, cell_num, 
-                            params=pars, transmitted)
+                            params=pars)
         
         # update time
         t.int <- t.int + 1
@@ -104,8 +103,7 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
       for (k in 1:dim(s.ind)[1]){
         rich[k] <- sum(s.ind[k, ] > 0)
       }
-      
-      trans_bar[, , , i, j] <- transmitted
+
       rich_bar[i, j] <- mean(rich)
       stored_pars <- c(stored_pars, pars)
       timesteps <- c(timesteps, t.int)
@@ -128,7 +126,7 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
 }
 
 # declare plotting functions
-plot.symb <- function(res){  
+plot.symb <- function(res, ...){  
   nsteps <- dim(res$t)
   par(mfrow=c(1, 2))
   plot(x=res$t, y=res$s.ind[, 1], type="l", 
@@ -152,11 +150,12 @@ plot.symb <- function(res){
 check <- FALSE
 
 if (check){
-  system.time(testout <- mpi_f(cells=100, iter=1, nER=1, 
-                               maxt=500, H=20, nS=2, rs=2,
-                               sig.s=.0009, gamma=0, phi=10000, 
-                               beta_d_min=50, beta_d_max=50, 
-                               mode="freq"))
+  system.time(testout <- mpi_f(maxt=50000, nS=100, H=100, sig.s=1, 
+                               beta_d_min=-1, beta_d_max=1, phi=100, 
+                               mode="dens", cells=1000))
+  
+  system.time(testout <- mpi_f(maxt=50000, nS=100, H=100, sig.s=1, 
+                beta_d_min=0, beta_d_max=0, phi=3))
   
   # view timeseries
   plot(testout)

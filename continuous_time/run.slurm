@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --time=02:00:00
+#SBATCH --time=00:30:00
 #SBATCH --job-name=run
 #SBATCH --output=slurm.out
 #SBATCH --error=slurm.err

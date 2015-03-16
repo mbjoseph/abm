@@ -56,7 +56,7 @@ transmit <- function(state, cell1, cell2, params){
 
 
 # agent-based model step function
-ABMstep <- function(state, action, cell, params, transmitted){
+ABMstep <- function(state, action, cell, params){
   counter <- 0
   if (action == "birth"){
     # find cell for host to disperse to
@@ -98,7 +98,6 @@ ABMstep <- function(state, action, cell, params, transmitted){
       t_out <- transmit(state, cell, ind_contacted, params)
       if (t_out$success){
         state[2, ] <- t_out$S
-        transmitted[sp1, sp2, state[2, cell]] <- transmitted[sp1, sp2, state[2, cell]] + 1
       }
     }
   }
@@ -129,8 +128,7 @@ ABMstep <- function(state, action, cell, params, transmitted){
       counter <- counter + success
     }
   }
-  return(list(state=state, counter = counter, 
-              transmitted=transmitted))
+  return(list(state=state, counter = counter))
 }
 
 # host_init() initializes the host species traits w.r.t. environmental conditions

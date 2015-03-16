@@ -4,11 +4,11 @@ library(gridExtra)
 
 system("rsync --update -raz --progress majo3748@login.rc.colorado.edu:/projects/majo3748/abm/ ~/Documents/manuscripts/abm/continuous_time/")
 
-system("mv Feb* results")
+system("mv continuous_time/Mar* continuous_time/results")
 
 # gather results
 dir <- paste(getwd(), "/continuous_time/results", sep="")
-data <- list.files(dir, pattern="Feb*")
+data <- list.files(dir, pattern="Mar*")
 
 # initialize vectors
 ERvec <- c()
@@ -18,8 +18,11 @@ rich <- c()
 beta_d <- c()
 sig_s <- c()
 phi <- c()
+mode <- c()
+ncells <- c()
 
 # read data
+pindex <- 1
 for (i in 1:length(data)){ # each node result
   d <- readRDS(paste("continuous_time/results/", data[i], sep=""))
   for (j in 1:length(d)){
@@ -38,28 +41,32 @@ for (i in 1:length(data)){ # each node result
       }
       sig_s <- c(sig_s, d[[j]]$stored_pars$sig.s)
       phi <- c(phi, d[[j]]$stored_pars$phi)
+      mode <- c(mode, d[[j]]$stored_pars$mode)
+      ncells <- c(ncells, d[[j]]$stored_pars$cells)
+      pindex <- pindex + 1
     }
   }
+  plot(d[[1]], main=paste0("Functional diversity = ", d[[1]]$ER))
   rm(d) # remove to conserve RAM
   print(paste("Completed", i, "of", length(data)))
 }
 
 # combine in data.frame
-ERd <- data.frame(ERvec, ERlow, ERhigh, rich, beta_d, sig_s, phi)
+ERd <- data.frame(ERvec, ERlow, ERhigh, rich, beta_d, sig_s, phi, mode, ncells)
 ERd <- ERd[order(ERd$ERvec), ]
 
 
 # plot effect of functional diversity for commensal symbionts
-commensals <- subset(ERd, beta_d==0 & phi == 5)
+commensals <- subset(ERd)
 p1 <- ggplot(commensals) + 
   geom_segment(aes(x=ERvec, xend=ERvec, y=ERlow, yend=ERhigh)) + 
-  facet_wrap(~sig_s) + 
+  facet_grid(sig_s~mode) + 
   xlab("Host functional diversity") + 
   ylab("Local range of within-host environments") + 
   theme_bw()
 
-p2 <- ggplot(commensals, aes(x=ERvec, y=rich)) + 
-  facet_wrap(~sig_s) +
+p2 <- ggplot(commensals, aes(x=ERvec, y=rich, color=factor(ncells), group=ncells)) + 
+  facet_grid(sig_s~mode) +
   geom_point(shape=1)+ 
   xlab("Host functional diversity") + 
   ylab("Mean symbiont richness") + 
@@ -71,7 +78,7 @@ grid.arrange(p2, p1, ncol=1)
 
  
 # make surface plot showing effect of functional div & infection eff
-eff_d <- subset(ERd, sig_s == 1 & phi == 5)
+eff_d <- subset(ERd, ncells==1000)
 library(scales)
 ggplot(eff_d, aes(x=ERvec, y=beta_d)) + 
   geom_point(aes(color=rich), size=4, alpha=.5) + 
@@ -94,9 +101,10 @@ d <- data.frame(mu=mu, x1=X$x1, x2=X$x2)
 p1 <- ggplot(d, aes(x1, x2, z=mu)) + theme_bw() +
   geom_tile(aes(fill=mu)) +
   stat_contour(binwidth=1.5) +
-  scale_fill_gradient2(low="blue", mid="white", high="orange") +
-  xlab("Covariate 1") + ylab("Covariate 2") +
-  ggtitle("Contour plot of the linear predictor")
+  scale_fill_gradient2(low="blue", mid="white", high="red", 
+                       name="Average\nsymbiont\nrichness", midpoint=20) +
+  xlab("Functional diversity") + ylab("Effect on fitness") +
+  ggtitle("Parasitism reduces the scaling of\n symbiont richness with host diversity")
 p1
 
 

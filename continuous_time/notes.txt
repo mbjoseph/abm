@@ -11,7 +11,6 @@ rsync --update -raz --progress majo3748@login.rc.colorado.edu:/projects/majo3748
 # push up files to janus
 rsync --exclude 'results' --update -raz --progress ~/Documents/manuscripts/abm/continuous_time/ majo3748@login.rc.colorado.edu:/projects/majo3748/abm/
 
-
 module load slurm
 
 # qsub is backwards compatible
