@@ -159,7 +159,7 @@ plot.symb <- function(res, ...){
 check <- FALSE
 
 if (check){
-  system.time(testout <- mpi_f(maxt=50000, nS=100, H=100, sig.s=1, 
+  system.time(testout <- mpi_f(maxt=5000, nS=100, H=100, sig.s=1, 
                                beta_d_min=-1, beta_d_max=1, phi=100, 
                                mode="dens", cells=1000))
   
