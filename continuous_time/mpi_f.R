@@ -26,6 +26,7 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
   rich_bar <- array(dim=c(nER, iter))
   stored_pars <- c()
   timesteps <- c()
+  wasted_contacts <- c()
   
   for (i in 1:nER){
     for (j in 1:iter){
@@ -37,6 +38,8 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
                     each=cells), "cntct")
       ntrans <- length(rnames)
       transctr <- rep(0, ntrans) # transition counter
+      n_contacts <- 0
+      successful_cntcts <- 0
 
       # initialize host community
       hosts <- host_init(cells, H, pcol=1)
@@ -78,6 +81,7 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
         event_type <- rnames[event]
         if (event_type=="cntct"){
           cell_num <- NA
+          n_contacts <- n_contacts + 1
         } else {
           cell_num <- event - cells * (which(names(ratelist) == event_type) - 1)
         }
@@ -91,6 +95,9 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
         t[t.int] <- t[t.int - 1] + tau[t.int-1]
         
         if (!all(state == nextstep$state)){
+          if (event_type == "cntct") {
+            successful_cntcts <- successful_cntcts + 1
+          }
           state <- nextstep$state
           n.ind <- rbind(n.ind, tabulate(state[1, ], nbins=H))
           s.ind <- rbind(s.ind, tabulate(state[2, ], nbins=nS))
@@ -107,6 +114,7 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
       rich_bar[i, j] <- mean(rich)
       stored_pars <- c(stored_pars, pars)
       timesteps <- c(timesteps, t.int)
+      wasted_contacts <- c(wasted_contacts, 1 - successful_cntcts / n_contacts)
     }  
   }
   
@@ -120,7 +128,8 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
               s.ind = s.ind,
               t=t.out,
               hosts=hosts, 
-              symbionts=symbionts)
+              symbionts=symbionts, 
+              wasted_contacts = wasted_contacts)
   class(res) <- "symb"
   return(res)
 }
