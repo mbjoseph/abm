@@ -58,6 +58,7 @@ transmit <- function(state, cell1, cell2, params){
 # agent-based model step function
 ABMstep <- function(state, action, cell, params){
   counter <- 0
+  same_species <- NA
   if (action == "birth"){
     # find cell for host to disperse to
     cells <- dim(state)[2]
@@ -128,7 +129,7 @@ ABMstep <- function(state, action, cell, params){
       counter <- counter + success
     }
   }
-  return(list(state=state, counter = counter))
+  return(list(state=state, counter = counter, same_species = same_species))
 }
 
 # host_init() initializes the host species traits w.r.t. environmental conditions
