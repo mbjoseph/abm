@@ -27,6 +27,8 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
   stored_pars <- c()
   timesteps <- c()
   wasted_contacts <- c()
+  win_transmission <- c()
+  among_transmission <- c()
   
   for (i in 1:nER){
     for (j in 1:iter){
@@ -40,6 +42,8 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
       transctr <- rep(0, ntrans) # transition counter
       n_contacts <- 0
       successful_cntcts <- 0
+      win_t <- 0
+      amng_t <- 0
 
       # initialize host community
       hosts <- host_init(cells, H, pcol=1)
@@ -94,9 +98,18 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
         t.int <- t.int + 1
         t[t.int] <- t[t.int - 1] + tau[t.int-1]
         
-        if (!all(state == nextstep$state)){
+        state_change <- !all(state == nextstep$state)
+        
+        if (state_change){
           if (event_type == "cntct") {
+            # count number of successful contacts
             successful_cntcts <- successful_cntcts + 1
+            # count among vs. within species transmission
+            if (nextstep$same_species){
+              win_t <- win_t + 1
+            } else {
+              amng_t <- amng_t + 1
+            }
           }
           state <- nextstep$state
           n.ind <- rbind(n.ind, tabulate(state[1, ], nbins=H))
@@ -115,6 +128,8 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
       stored_pars <- c(stored_pars, pars)
       timesteps <- c(timesteps, t.int)
       wasted_contacts <- c(wasted_contacts, 1 - successful_cntcts / n_contacts)
+      win_transmission <- c(win_transmission, win_t / t[t.int])
+      among_transmission <- c(among_transmission, amng_t / t[t.int])
     }  
   }
   
@@ -129,7 +144,9 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
               t=t.out,
               hosts=hosts, 
               symbionts=symbionts, 
-              wasted_contacts = wasted_contacts)
+              wasted_contacts = wasted_contacts, 
+              win_transmission = win_transmission, 
+              among_transmission = among_transmission)
   class(res) <- "symb"
   return(res)
 }
@@ -159,16 +176,14 @@ plot.symb <- function(res, ...){
 check <- FALSE
 
 if (check){
-  system.time(testout <- mpi_f(maxt=5000, nS=100, H=100, sig.s=1, 
-                               beta_d_min=-1, beta_d_max=1, phi=100, 
-                               mode="dens", cells=1000))
-  
-  system.time(testout <- mpi_f(maxt=50000, nS=100, H=100, sig.s=1, 
-                beta_d_min=0, beta_d_max=0, phi=3))
+  system.time(testout <- mpi_f(maxt=10000, nS=100, H=100, sig.s=1, c=.001,
+                               beta_d_min=0, beta_d_max=0, phi=100, r=1,
+                               mode="dens", cells=100))
   
   # view timeseries
   plot(testout)
-
+  str(testout)
+  
   library(ggplot2)
   # view niches
   ggplot(testout$symbionts$sniche.d, 
