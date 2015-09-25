@@ -30,6 +30,8 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
   win_transmission <- c()
   among_transmission <- c()
   
+  event_names <- c("birth", "death", "colon", "rains", "recov", "cntct")
+  
   for (i in 1:nER){
     for (j in 1:iter){
       # initialize state arrays, time objects, and abundance counters
@@ -75,19 +77,19 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
       #while(t[t.int] < maxt){
       while(t.int < maxt){
         ratelist <- ratefun(state, pars)
-        rates <- unlist(ratelist)
-        tot.rates <- sum(rates)
+      #  rates <- unlist(ratelist, use.names=FALSE)
+        tot.rates <- sum(ratelist)
         stopifnot(!is.na(tot.rates))
-        stopifnot(all(rates >= 0 ))
+        stopifnot(all(ratelist >= 0 ))
         tau[t.int] <- rexp(1, tot.rates)
-        event <- sample(1:ntrans, size=1, prob=rates)
-        f_name <- names(rates[event])
+        event <- sample.int(ntrans, size=1, prob=ratelist)
+#        f_name <- names(rates[event])
         event_type <- rnames[event]
         if (event_type=="cntct"){
-          cell_num <- NA
+          cell_num <- 0
           n_contacts <- n_contacts + 1
         } else {
-          cell_num <- event - cells * (which(names(ratelist) == event_type) - 1)
+          cell_num <- event - cells * (which(event_names == event_type) - 1)
         }
         
         # carry out action on chosen cell
@@ -178,11 +180,33 @@ check <- FALSE
 if (check){
   system.time(testout <- mpi_f(maxt=10000, nS=100, H=100, sig.s=1, c=.001,
                                beta_d_min=0, beta_d_max=0, phi=100, r=1,
-                               mode="dens", cells=100))
+                               mode="dens", cells=100, a_pen=1))
   
   # view timeseries
   plot(testout)
   str(testout)
+  
+  dump('mpi_f', file='mpi_f.R')
+  source('mpi_f.R')
+  
+  library(aprof)
+  tmp <- tempfile()
+  Rprof(tmp, line.profiling=TRUE)
+  mpi_f(maxt=10000, nS=100, H=100, sig.s=1, c=.001,
+                   beta_d_min=0, beta_d_max=0, phi=100, r=1,
+                   mode="dens", cells=100, a_pen=1)
+  Rprof(append=FALSE)
+  fooaprof <- aprof('mpi_f.R', tmp)
+  summary(fooaprof)
+  plot(fooaprof)
+  profileplot(fooaprof)
+  
+  library(lineprof)
+  p <- lineprof(mpi_f(maxt=10000, nS=100, H=100, sig.s=1, c=.001,
+                      beta_d_min=0, beta_d_max=0, phi=100, r=1,
+                      mode="dens", cells=100, a_pen=1))
+  shine(p)
+  
   
   library(ggplot2)
   # view niches

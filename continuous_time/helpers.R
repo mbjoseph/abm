@@ -21,25 +21,26 @@
 # hosts = result from host_init
 # symbionts = result from symb_init
 ratefun <- function(state, params){
-  X <- state[1, ] # host state
-  S <- state[2, ] # symbiont state
   stopifnot(params$beta_d > -1)
-  with(c(as.list(params)),
-       list(
-         birth = ifelse(X > 0, r, 0),
-         death = ifelse(X > 0, d * (1 + beta_d * (S > 0)), 0),
-         colon = ifelse(X == 0, c * H, 0), 
-         rains = ifelse((X > 0 & S == 0), rs * nS, 0), 
-         recov = ifelse((X > 0 & S > 0), gamma, 0),
-         cntct = ifelse(sum(X) == 0, 0, 
-                        ifelse(mode == "density", 
-                          phi * sum(X > 0 & S == 0) * sum(X>0 & S > 0), # dd
-                          phi * sum(X > 0 & S == 0) * sum(X>0 & S > 0) / sum(X>0) # fd
-                          )
-                        )
-         # could incorporate a_pen here, to avoid unrealized contacts
-       )
-       )
+  res <- matrix(0, nrow=5, ncol=ncol(state))
+  x_occ <- state[1, ] > 0 # host slots occupied
+  s_occ <- state[2, ] > 0 # symbiont slots occupied
+  res[1, x_occ] <- params$r                                   # birth
+  res[2, x_occ & !s_occ] <- params$d                          # death uninfect
+  res[2, x_occ & s_occ] <- params$d * (1 + params$beta_d)     # death infect
+  res[3, !x_occ] <- params$c * params$H                       # colon
+  res[4, x_occ & !s_occ] <- params$rs * params$nS             # rains
+  res[5, s_occ & s_occ] <- params$gamma                       # recov
+  if (!any(x_occ)){
+    cntct <- 0
+  } else {
+    if (params$mode == 'density'){
+      cntct <- params$phi * sum(x_occ & !s_occ) * sum(x_occ & s_occ)
+    } else {
+      cntct <- params$phi * sum(x_occ & !s_occ) * sum(x_occ & s_occ) / sum(x_occ)
+    }
+  }
+  c(t(res), cntct)
 }
 
 # helper function to update symbiont state through transmission
@@ -57,12 +58,13 @@ transmit <- function(state, cell1, cell2, params){
 
 # agent-based model step function
 ABMstep <- function(state, action, cell, params){
+  stopifnot(length(cell) == 1)
   counter <- 0
   same_species <- NA
   if (action == "birth"){
     # find cell for host to disperse to
     cells <- dim(state)[2]
-    disp.cell <- sample(1:cells, size=1)
+    disp.cell <- sample.int(cells, size=1)
     if (state[1, disp.cell] == 0){
       success <- rbinom(1, 1, prob = params$hosts$Pcol[disp.cell, state[1, cell]])
       if (success == 1){
@@ -105,7 +107,7 @@ ABMstep <- function(state, action, cell, params){
   if (action == "rains"){
     if(state[2, cell] == 0){
       # eventually call to symbiont rain function
-      attempting <- sample(1:params$nS, size=1)
+      attempting <- sample.int(params$nS, size=1)
       success <- rbinom(1, 1, params$symbionts$Pcol[state[1, cell], attempting])
       if (success){
         state[2, cell] <- attempting
@@ -123,7 +125,7 @@ ABMstep <- function(state, action, cell, params){
   }
   if (action == "colon"){
     if (state[1, cell] == 0){
-      spnum <- sample(1:params$H, 1)
+      spnum <- sample.int(params$H, 1)
       success <- rbinom(1, 1, prob = params$hosts$Pcol[cell, spnum])
       state[1, cell] <- ifelse(success == 1, spnum, 0)
       counter <- counter + success
