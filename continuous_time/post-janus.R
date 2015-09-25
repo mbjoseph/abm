@@ -22,6 +22,7 @@ sig_s <- c()
 phi <- c()
 mode <- c()
 ncells <- c()
+trans_rate <- c()
 
 # read data
 pindex <- 1
@@ -45,6 +46,9 @@ for (i in 1:length(data)){ # each node result
       phi <- c(phi, d[[j]]$stored_pars$phi)
       mode <- c(mode, d[[j]]$stored_pars$mode)
       ncells <- c(ncells, d[[j]]$stored_pars$cells)
+      # roundabout way to calculate the number of new infections over time for all
+      trans_rate <- c(trans_rate, length(which(diff(apply(d[[j]]$s.ind, 1, sum)) == 1)) / 
+                          max(d[[j]]$t))
       pindex <- pindex + 1
     }
   }
@@ -54,7 +58,7 @@ for (i in 1:length(data)){ # each node result
 }
 
 # combine in data.frame
-ERd <- data.frame(ERvec, ERlow, ERhigh, rich, beta_d, sig_s, phi, mode, ncells)
+ERd <- data.frame(ERvec, ERlow, ERhigh, rich, beta_d, sig_s, phi, mode, ncells, trans_rate)
 ERd <- ERd[order(ERd$ERvec), ]
 library(plyr)
 ERd$transmission <- mapvalues(ERd$mode, from=c("dens", "freq"), 
@@ -81,9 +85,17 @@ p2 <- ggplot(commensals, aes(x=ERvec, y=rich, group=ncells)) +
 grid.arrange(p2, p1, ncol=1)
 #dev.off()
 
- 
 # make surface plot showing effect of functional div & infection eff
 eff_d <- subset(ERd, ncells==1000)
+cuts <- quantile(eff_d$beta_d, probs=seq(0, 1, length.out=4))
+eff_d$effect <- ifelse(eff_d$beta_d < cuts[2], "Parasitic", 
+                       ifelse(eff_d$beta_d > cuts[3], "Mutualistic", 
+                              "Commensal"))
+
+ggplot(eff_d, aes(x=ERvec, y=rich, color=effect)) + 
+  geom_point() + 
+  stat_smooth(method="lm", formula = y ~ 0 + x + I(x^2))
+
 library(scales)
 ggplot(eff_d, aes(x=ERvec, y=beta_d)) + 
   geom_point(aes(color=rich), size=4, alpha=.5) + 
@@ -115,6 +127,7 @@ p1 <- ggplot(d, aes(x1, x2, z=mu)) +
 #  ggtitle("Parasitism reduces the scaling of\n symbiont richness with host diversity")
 p1
 
+library(car)
 scatter3d(rich ~ ERvec + beta_d)
 
 
