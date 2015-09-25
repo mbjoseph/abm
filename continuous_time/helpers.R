@@ -31,6 +31,25 @@ ratefun <- function(state, params){
   res[3, !x_occ] <- params$c * params$H                       # colon
   res[4, x_occ & !s_occ] <- params$rs * params$nS             # rains
   res[5, s_occ & s_occ] <- params$gamma                       # recov
+  
+  # define contact rates
+  if (!any(x_occ) | !any(s_occ)){ # need susceptibles and infectives for transm.
+    Tmat <- matrix(0, nrow=params$H, ncol=params$nS)
+  } else {
+    # generate table of counts for each host species that is uninfected
+    n_susc <- c(table(state[1, !s_occ]))[-1] # -1 because it returns number of 0s
+    # generate table of counts for number of hosts infected with each symbiont
+    n_infct <- c(table(state[2, ]))[-1]
+    
+    # put the counts into matrices
+    N_H <- matrix(n_susc, nrow=params$H, ncol=params$nS)
+    N_I <- matrix(n_infct, nrow=params$H, ncol=params$nS, byrow=TRUE)
+    
+    # generate transmision matrix
+    Tmat <- params$phi * N_H * N_I * params$symbionts$Pcol
+  }
+  
+  # return unrolled transmission matrix
   if (!any(x_occ)){
     cntct <- 0
   } else {
@@ -57,7 +76,7 @@ transmit <- function(state, cell1, cell2, params){
 
 
 # agent-based model step function
-ABMstep <- function(state, action, cell, params){
+ABMstep <- function(state, action, cell, params, event){
   stopifnot(length(cell) == 1)
   counter <- 0
   same_species <- NA
@@ -74,6 +93,11 @@ ABMstep <- function(state, action, cell, params){
     }
   }
   if (action == "cntct"){
+    # determine which symbiont species we have
+    infecting_symbiont_sp <- params$symb_index[event - params$non_cntct_indices]
+    #state[cell, 2] <- infecting_symbiont_sp
+    #counter <- counter + 1
+    
     # find S and I hosts at random (proportional to abundance)
     Iindivs <- which(state[1, ] > 0 & state[2, ] > 0)
     if (length(Iindivs) == 1){

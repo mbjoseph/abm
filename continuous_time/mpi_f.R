@@ -32,14 +32,21 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
   
   event_names <- c("birth", "death", "colon", "rains", "recov", "cntct")
   
+  # generate host-symbiont species indices for use with transmission matrix
+  host_index <- rep(1:H, nS)
+  symb_index <- rep(1:nS, times=H)
+  non_cntct_indices <- cells * length(event_names) # for ratefun extraction
+  
   for (i in 1:nER){
     for (j in 1:iter){
       # initialize state arrays, time objects, and abundance counters
       state <- array(0, dim=c(2, cells))
       n.ind <- array(0, dim=c(1, H))
       s.ind <- array(0, dim=c(1, nS))
+      #rnames <- c(rep(c("birth", "death", "colon", "rains", "recov"), 
+      #              each=cells), rep("cntct", H*nS))
       rnames <- c(rep(c("birth", "death", "colon", "rains", "recov"), 
-                    each=cells), "cntct")
+                                    each=cells), "cntct")
       ntrans <- length(rnames)
       transctr <- rep(0, ntrans) # transition counter
       n_contacts <- 0
@@ -66,7 +73,9 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
                    gamma= gamma, 
                    hosts=hosts,
                    symbionts=symbionts, 
-                   mode=mode)
+                   mode=mode, 
+                   host_index=host_index, symb_index=symb_index,
+                   non_cntct_indices = non_cntct_indices)
       
       t <- 0
       t.out <- 0
@@ -77,24 +86,24 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
       #while(t[t.int] < maxt){
       while(t.int < maxt){
         ratelist <- ratefun(state, pars)
-      #  rates <- unlist(ratelist, use.names=FALSE)
         tot.rates <- sum(ratelist)
         stopifnot(!is.na(tot.rates))
         stopifnot(all(ratelist >= 0 ))
         tau[t.int] <- rexp(1, tot.rates)
         event <- sample.int(ntrans, size=1, prob=ratelist)
-#        f_name <- names(rates[event])
         event_type <- rnames[event]
         if (event_type=="cntct"){
           cell_num <- 0
+          # determine which host will be infected
+          # cell_num <- which(state[, 1] == host_index[event - non_cntct_indices])[1]
+          # take first individual, they're exchangeable
           n_contacts <- n_contacts + 1
         } else {
           cell_num <- event - cells * (which(event_names == event_type) - 1)
         }
         
         # carry out action on chosen cell
-        nextstep <- ABMstep(state, event_type, cell_num, 
-                            params=pars)
+        nextstep <- ABMstep(state, event_type, cell_num, params=pars, event)
         
         # update time
         t.int <- t.int + 1
@@ -178,10 +187,10 @@ plot.symb <- function(res, ...){
 check <- FALSE
 
 if (check){
-  system.time(testout <- mpi_f(maxt=10000, nS=100, H=100, sig.s=1, c=.001,
+  system.time(testout <- mpi_f(maxt=1000, nS=100, H=100, sig.s=.5, c=.001,
                                beta_d_min=0, beta_d_max=0, phi=100, r=1,
                                mode="dens", cells=100, a_pen=1))
-  
+  testout$wasted_contacts
   # view timeseries
   plot(testout)
   str(testout)
