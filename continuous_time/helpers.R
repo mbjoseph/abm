@@ -22,31 +22,39 @@
 # symbionts = result from symb_init
 ratefun <- function(state, params){
   stopifnot(params$beta_d > -1)
-  res <- matrix(0, nrow=5, ncol=ncol(state))
+  res <- matrix(0, nrow=4, ncol=ncol(state))
   x_occ <- state[1, ] > 0 # host slots occupied
   s_occ <- state[2, ] > 0 # symbiont slots occupied
   res[1, x_occ] <- params$r                                   # birth
   res[2, x_occ & !s_occ] <- params$d                          # death uninfect
   res[2, x_occ & s_occ] <- params$d * (1 + params$beta_d)     # death infect
   res[3, !x_occ] <- params$c * params$H                       # colon
-  res[4, x_occ & !s_occ] <- params$rs * params$nS             # rains
-  res[5, s_occ & s_occ] <- params$gamma                       # recov
+  res[4, s_occ & s_occ] <- params$gamma                       # recov
+  
+  # generate table of counts for each host species that is uninfected
+  n_susc <- table(state[1, x_occ & !s_occ])
+  nsv <- rep(0, params$H)
+  nsv[as.numeric(names(n_susc))] <- c(n_susc)
+  # put into matrix form
+  N_H <- matrix(nsv, nrow=params$H, ncol=params$nS)
+  
+  # define symbiont colonization rates
+  if (!any(x_occ & !s_occ)){
+    sCmat <- matrix(0, nrow=params$H, ncol=params$nS)
+  } else {
+    sCmat <- params$rs * N_H * params$symbionts$Pcol
+  }
   
   # define contact rates
   if (!any(x_occ) | !any(s_occ)){ # need susceptibles and infectives for transm.
     Tmat <- matrix(0, nrow=params$H, ncol=params$nS)
   } else {
-    # generate table of counts for each host species that is uninfected
-    n_susc <- table(state[1, x_occ & !s_occ])
-    nsv <- rep(0, params$H)
-    nsv[as.numeric(names(n_susc))] <- c(n_susc)
     # generate table of counts for number of hosts infected with each symbiont
     n_infct <- table(state[2, ])[-1] # -1 because it returns number of 0s
     niv <- rep(0, params$nS)
     niv[as.numeric(names(n_infct))] <- c(n_infct)
     
     # put the counts into matrices
-    N_H <- matrix(nsv, nrow=params$H, ncol=params$nS)
     N_I <- matrix(niv, nrow=params$H, ncol=params$nS, byrow=TRUE)
     
     # generate transmision matrix
@@ -54,12 +62,13 @@ ratefun <- function(state, params){
   }
   
   # return unrolled transmission matrix
-  c(t(res), c(Tmat))
+  c(t(res), c(sCmat), c(Tmat))
 }
 
 # agent-based model step function
 ABMstep <- function(state, action, cell, params, event){
   stopifnot(length(cell) == 1)
+  stopifnot(!is.na(cell))
   counter <- 0
   same_species <- NA
   if (action == "birth"){
@@ -81,15 +90,11 @@ ABMstep <- function(state, action, cell, params, event){
     counter <- counter + 1
   }
   if (action == "rains"){
-    if(state[2, cell] == 0){
-      # eventually call to symbiont rain function
-      attempting <- sample.int(params$nS, size=1)
-      success <- rbinom(1, 1, params$symbionts$Pcol[state[1, cell], attempting])
-      if (success){
-        state[2, cell] <- attempting
-        counter <- counter + success
-      }
-    }
+    stopifnot(state[2, cell] == 0)
+    # which symbiont species
+    colonizing_symbiont_sp <- params$symb_index[event - 4*params$cells]
+    state[2, cell] <- colonizing_symbiont_sp
+    counter <- counter + 1
   }
   if (action == "death"){
     state[, cell] <- 0 # host and symbiont dies

@@ -28,21 +28,23 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
   timesteps <- c()
   
   event_names <- c("birth", "death", "colon", "rains", "recov", "cntct")
-  
+  event_index <- rep(1:cells, times=4)
   # generate host-symbiont species indices for use with transmission matrix
   host_index <- rep(1:H, nS)
   symb_index <- rep(1:nS, each=H)
-  non_cntct_indices <- cells * (length(event_names) - 1) # for ratefun extraction
+  non_cntct_indices <- 4*cells + H*nS # for ratefun extraction
   
   for (i in 1:nER){
     for (j in 1:iter){
       # initialize state arrays, time objects, and abundance counters
       state <- array(0, dim=c(2, cells))
       state_unchanged <- 0
-      n.ind <- array(0, dim=c(1, H))
-      s.ind <- array(0, dim=c(1, nS))
-      rnames <- c(rep(c("birth", "death", "colon", "rains", "recov"), 
-                    each=cells), rep("cntct", H*nS))
+      n.ind <- array(dim=c(maxt, H))
+      n.ind[1, ] <- 0
+      s.ind <- array(dim=c(maxt, nS))
+      s.ind[1, ] <- 0
+      rnames <- c(rep(c("birth", "death", "colon", "recov"), 
+                    each=cells), rep("rains", H*nS), rep("cntct", H*nS))
       ev <- rep(NA, maxt) # event counter
       ntrans <- length(rnames)
       transctr <- rep(0, ntrans) # transition counter
@@ -96,11 +98,20 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
           # take first individual, they're exchangeable
           n_contacts <- n_contacts + 1
         } else {
-          cell_num <- event - cells * (which(event_names == event_type) - 1)
+          if (event_type == "rains"){
+            # determine which host species and individual
+            h_sp <- host_index[event - 4*cells]
+            cell_num <- which(state[1, ] == h_sp & state[2, ] == 0)[1]
+            stopifnot(!is.na(cell_num))
+          } else {
+            stopifnot(event <= length(event_index))
+            cell_num <- event_index[event]
+          }
         }
         
         # carry out action on chosen cell
-        nextstep <- ABMstep(state, event_type, cell_num, params=pars, event)
+        nextstep <- ABMstep(state, event_type, 
+                            cell=cell_num, params=pars, event)
         
         # update time
         t.int <- t.int + 1
@@ -110,8 +121,8 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
         
         if (state_change){
           state <- nextstep$state
-          n.ind <- rbind(n.ind, tabulate(state[1, ], nbins=H))
-          s.ind <- rbind(s.ind, tabulate(state[2, ], nbins=nS))
+          n.ind[t.int, ] <- tabulate(state[1, ], nbins=H)
+          s.ind[t.int, ] <- tabulate(state[2, ], nbins=nS)
           t.out <- c(t.out, t[t.int])
         } else {
           state_unchanged <- state_unchanged + 1
@@ -129,6 +140,10 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
       timesteps <- c(timesteps, t.int)
     }  
   }
+  
+  na_steps <- is.na(n.ind[, 1])
+  n.ind <- n.ind[!na_steps, ]
+  s.ind <- s.ind[!na_steps, ]
   
   res <- list(trans_bar = trans_bar, 
               rich_bar = rich_bar, 
@@ -172,8 +187,8 @@ plot.symb <- function(res, ...){
 check <- FALSE
 
 if (check){
-  system.time(testout <- mpi_f(maxt=1000, nS=10, H=3, sig.s=1, c=.00001, 
-                               beta_d_min=0, beta_d_max=0, phi=1, r=.1, rs=.01,
+  system.time(testout <- mpi_f(maxt=10000, nS=100, H=100, sig.s=10, c=.0001, 
+                               beta_d_min=0, beta_d_max=0, phi=10, r=.1, rs=1,
                                mode="dens", cells=100, a_pen=1, gamma=0, d=.08))
   # view timeseries
   plot(testout)
@@ -186,9 +201,9 @@ if (check){
   library(aprof)
   tmp <- tempfile()
   Rprof(tmp, line.profiling=TRUE)
-  mpi_f(maxt=10000, nS=10, H=10, sig.s=1, c=.001,
-                   beta_d_min=0, beta_d_max=0, phi=100, r=1,
-                   mode="dens", cells=10, a_pen=1)
+  mpi_f(maxt=10000, nS=100, H=100, sig.s=1, c=.001,
+        beta_d_min=0, beta_d_max=0, phi=100, r=1,
+        mode="dens", cells=100, a_pen=1)
   Rprof(append=FALSE)
   fooaprof <- aprof('mpi_f.R', tmp)
   summary(fooaprof)
@@ -196,9 +211,9 @@ if (check){
   profileplot(fooaprof)
   
   library(lineprof)
-  p <- lineprof(mpi_f(maxt=10000, nS=10, H=10, sig.s=1, c=.001,
-                      beta_d_min=0, beta_d_max=0, phi=100, r=1,
-                      mode="dens", cells=20, a_pen=1))
+  p <- lineprof(mpi_f(maxt=10000, nS=100, H=100, sig.s=1, c=.001,
+                                         beta_d_min=0, beta_d_max=0, phi=100, r=1,
+                                         mode="dens", cells=100, a_pen=1))
   shine(p)
   
   
