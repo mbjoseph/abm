@@ -26,27 +26,24 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
   rich_bar <- array(dim=c(nER, iter))
   stored_pars <- c()
   timesteps <- c()
-  wasted_contacts <- c()
-  win_transmission <- c()
-  among_transmission <- c()
   
   event_names <- c("birth", "death", "colon", "rains", "recov", "cntct")
   
   # generate host-symbiont species indices for use with transmission matrix
   host_index <- rep(1:H, nS)
-  symb_index <- rep(1:nS, times=H)
-  non_cntct_indices <- cells * length(event_names) # for ratefun extraction
+  symb_index <- rep(1:nS, each=H)
+  non_cntct_indices <- cells * (length(event_names) - 1) # for ratefun extraction
   
   for (i in 1:nER){
     for (j in 1:iter){
       # initialize state arrays, time objects, and abundance counters
       state <- array(0, dim=c(2, cells))
+      state_unchanged <- 0
       n.ind <- array(0, dim=c(1, H))
       s.ind <- array(0, dim=c(1, nS))
-      #rnames <- c(rep(c("birth", "death", "colon", "rains", "recov"), 
-      #              each=cells), rep("cntct", H*nS))
       rnames <- c(rep(c("birth", "death", "colon", "rains", "recov"), 
-                                    each=cells), "cntct")
+                    each=cells), rep("cntct", H*nS))
+      ev <- rep(NA, maxt) # event counter
       ntrans <- length(rnames)
       transctr <- rep(0, ntrans) # transition counter
       n_contacts <- 0
@@ -83,19 +80,19 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
       tau <- NULL
       
       pb <- txtProgressBar(min=0, max=maxt, style=3)
-      #while(t[t.int] < maxt){
       while(t.int < maxt){
         ratelist <- ratefun(state, pars)
         tot.rates <- sum(ratelist)
         stopifnot(!is.na(tot.rates))
-        stopifnot(all(ratelist >= 0 ))
+        stopifnot(all(ratelist >= 0))
         tau[t.int] <- rexp(1, tot.rates)
         event <- sample.int(ntrans, size=1, prob=ratelist)
         event_type <- rnames[event]
+        ev[t.int] <- event_type
         if (event_type=="cntct"){
-          cell_num <- 0
           # determine which host will be infected
-          # cell_num <- which(state[, 1] == host_index[event - non_cntct_indices])[1]
+          h_sp <- host_index[event - non_cntct_indices]
+          cell_num <- which(state[1, ] == h_sp & state[2, ] == 0)[1]
           # take first individual, they're exchangeable
           n_contacts <- n_contacts + 1
         } else {
@@ -112,20 +109,12 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
         state_change <- !all(state == nextstep$state)
         
         if (state_change){
-          if (event_type == "cntct") {
-            # count number of successful contacts
-            successful_cntcts <- successful_cntcts + 1
-            # count among vs. within species transmission
-            if (nextstep$same_species){
-              win_t <- win_t + 1
-            } else {
-              amng_t <- amng_t + 1
-            }
-          }
           state <- nextstep$state
           n.ind <- rbind(n.ind, tabulate(state[1, ], nbins=H))
           s.ind <- rbind(s.ind, tabulate(state[2, ], nbins=nS))
           t.out <- c(t.out, t[t.int])
+        } else {
+          state_unchanged <- state_unchanged + 1
         }
         setTxtProgressBar(pb, t.int)
       }
@@ -138,9 +127,6 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
       rich_bar[i, j] <- mean(rich)
       stored_pars <- c(stored_pars, pars)
       timesteps <- c(timesteps, t.int)
-      wasted_contacts <- c(wasted_contacts, 1 - successful_cntcts / n_contacts)
-      win_transmission <- c(win_transmission, win_t / t[t.int])
-      among_transmission <- c(among_transmission, amng_t / t[t.int])
     }  
   }
   
@@ -155,9 +141,8 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
               t=t.out,
               hosts=hosts, 
               symbionts=symbionts, 
-              wasted_contacts = wasted_contacts, 
-              win_transmission = win_transmission, 
-              among_transmission = among_transmission)
+              state_unchanged=state_unchanged, 
+              ev=ev)
   class(res) <- "symb"
   return(res)
 }
@@ -187,13 +172,13 @@ plot.symb <- function(res, ...){
 check <- FALSE
 
 if (check){
-  system.time(testout <- mpi_f(maxt=1000, nS=100, H=100, sig.s=.5, c=.001,
-                               beta_d_min=0, beta_d_max=0, phi=100, r=1,
-                               mode="dens", cells=100, a_pen=1))
-  testout$wasted_contacts
+  system.time(testout <- mpi_f(maxt=1000, nS=10, H=3, sig.s=1, c=.00001, 
+                               beta_d_min=0, beta_d_max=0, phi=1, r=.1, rs=.01,
+                               mode="dens", cells=100, a_pen=1, gamma=0, d=.08))
   # view timeseries
   plot(testout)
   str(testout)
+  table(testout$ev)
   
   dump('mpi_f', file='mpi_f.R')
   source('mpi_f.R')
@@ -201,9 +186,9 @@ if (check){
   library(aprof)
   tmp <- tempfile()
   Rprof(tmp, line.profiling=TRUE)
-  mpi_f(maxt=10000, nS=100, H=100, sig.s=1, c=.001,
+  mpi_f(maxt=10000, nS=10, H=10, sig.s=1, c=.001,
                    beta_d_min=0, beta_d_max=0, phi=100, r=1,
-                   mode="dens", cells=100, a_pen=1)
+                   mode="dens", cells=10, a_pen=1)
   Rprof(append=FALSE)
   fooaprof <- aprof('mpi_f.R', tmp)
   summary(fooaprof)
@@ -211,9 +196,9 @@ if (check){
   profileplot(fooaprof)
   
   library(lineprof)
-  p <- lineprof(mpi_f(maxt=10000, nS=100, H=100, sig.s=1, c=.001,
+  p <- lineprof(mpi_f(maxt=10000, nS=10, H=10, sig.s=1, c=.001,
                       beta_d_min=0, beta_d_max=0, phi=100, r=1,
-                      mode="dens", cells=100, a_pen=1))
+                      mode="dens", cells=20, a_pen=1))
   shine(p)
   
   

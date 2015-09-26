@@ -37,43 +37,25 @@ ratefun <- function(state, params){
     Tmat <- matrix(0, nrow=params$H, ncol=params$nS)
   } else {
     # generate table of counts for each host species that is uninfected
-    n_susc <- c(table(state[1, !s_occ]))[-1] # -1 because it returns number of 0s
+    n_susc <- table(state[1, x_occ & !s_occ])
+    nsv <- rep(0, params$H)
+    nsv[as.numeric(names(n_susc))] <- c(n_susc)
     # generate table of counts for number of hosts infected with each symbiont
-    n_infct <- c(table(state[2, ]))[-1]
+    n_infct <- table(state[2, ])[-1] # -1 because it returns number of 0s
+    niv <- rep(0, params$nS)
+    niv[as.numeric(names(n_infct))] <- c(n_infct)
     
     # put the counts into matrices
-    N_H <- matrix(n_susc, nrow=params$H, ncol=params$nS)
-    N_I <- matrix(n_infct, nrow=params$H, ncol=params$nS, byrow=TRUE)
+    N_H <- matrix(nsv, nrow=params$H, ncol=params$nS)
+    N_I <- matrix(niv, nrow=params$H, ncol=params$nS, byrow=TRUE)
     
     # generate transmision matrix
     Tmat <- params$phi * N_H * N_I * params$symbionts$Pcol
   }
   
   # return unrolled transmission matrix
-  if (!any(x_occ)){
-    cntct <- 0
-  } else {
-    if (params$mode == 'density'){
-      cntct <- params$phi * sum(x_occ & !s_occ) * sum(x_occ & s_occ)
-    } else {
-      cntct <- params$phi * sum(x_occ & !s_occ) * sum(x_occ & s_occ) / sum(x_occ)
-    }
-  }
-  c(t(res), cntct)
+  c(t(res), c(Tmat))
 }
-
-# helper function to update symbiont state through transmission
-transmit <- function(state, cell1, cell2, params){
-  X <- state[1, ]
-  S <- state[2, ]
-  pr.estab <- params$symbionts$Pcol[X[cell2], S[cell1]] # is a host x symb array
-  success <- rbinom(1, 1, pr.estab)
-  if (success){
-    S[cell2] <- S[cell1]
-  }
-  return(list(S=S, success=success))
-}
-
 
 # agent-based model step function
 ABMstep <- function(state, action, cell, params, event){
@@ -95,38 +77,8 @@ ABMstep <- function(state, action, cell, params, event){
   if (action == "cntct"){
     # determine which symbiont species we have
     infecting_symbiont_sp <- params$symb_index[event - params$non_cntct_indices]
-    #state[cell, 2] <- infecting_symbiont_sp
-    #counter <- counter + 1
-    
-    # find S and I hosts at random (proportional to abundance)
-    Iindivs <- which(state[1, ] > 0 & state[2, ] > 0)
-    if (length(Iindivs) == 1){
-      cell <- Iindivs
-    } else {
-      cell <- sample(Iindivs, size=1)
-    }
-    
-    Sindivs <- which(state[1, ] > 0 & state[2, ] == 0)
-    if (length(Sindivs) == 1){
-      ind_contacted <- Sindivs
-    } else {
-      ind_contacted <- sample(Sindivs, size=1)
-    }
-    sp1 <- state[1, cell]
-    sp2 <- state[1, ind_contacted]
-    same_species <- as.numeric(sp1 == sp2)
-    contact_realized <- rbinom(1, 1, 
-                               same_species + 
-                                 (1 - same_species) * params$a_pen)
-    # if contact realized, check for transmission
-    if (contact_realized){
-      counter <- counter + 1
-      # call to transmission function
-      t_out <- transmit(state, cell, ind_contacted, params)
-      if (t_out$success){
-        state[2, ] <- t_out$S
-      }
-    }
+    state[2, cell] <- infecting_symbiont_sp
+    counter <- counter + 1
   }
   if (action == "rains"){
     if(state[2, cell] == 0){
@@ -151,11 +103,12 @@ ABMstep <- function(state, action, cell, params, event){
     if (state[1, cell] == 0){
       spnum <- sample.int(params$H, 1)
       success <- rbinom(1, 1, prob = params$hosts$Pcol[cell, spnum])
-      state[1, cell] <- ifelse(success == 1, spnum, 0)
+      if (success) state[1, cell] <- spnum
+      #state[1, cell] <- ifelse(success == 1, spnum, 0)
       counter <- counter + success
     }
   }
-  return(list(state=state, counter = counter, same_species = same_species))
+  return(list(state=state, counter = counter))
 }
 
 # host_init() initializes the host species traits w.r.t. environmental conditions
