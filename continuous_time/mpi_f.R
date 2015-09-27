@@ -1,31 +1,14 @@
-mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10, 
+mpi_f <- function(maxt=1, H=10, nS=10, 
                   a_pen=1, sig.s=10, rs=.1, gamma=0.1, 
-                  cells=100, r=2, d=.1, 
+                  cells=100, r=2, d=.1, sERmin=-50, sERmax=50,
                   beta_d_min=0, beta_d_max=0,
                   c=.1, phi=5, mode="dens"){
   stopifnot(mode == "dens" | mode == "freq")
 
   # generate environmental ranges
-  ER <- sample(seq(1, 100, by=.01), size = nER, replace=FALSE)
-  
-  # regional symbiont niche minimum and maximum
-  sERmin <- -50
-  sERmax <- 50
-  
-  # generate values for Emin and Emax, nrow=nER
-  Earray <- array(dim=c(nER, 2))
-  for (i in 1:nER){
-    # find range of potential means
-    rmin <- sERmin + ER[i] / 2
-    rmax <- sERmax - ER[i] / 2
-    ERmidpoint <- runif(1, rmin, rmax)
-    Earray[i, ] <- c(ERmidpoint - ER[i] / 2, ERmidpoint + ER[i] / 2)
-  }
-  
-  trans_bar <- array(dim=c(H, H, nS, nER, iter))
-  rich_bar <- array(dim=c(nER, iter))
-  stored_pars <- c()
-  timesteps <- c()
+  #sERmin <- -50 # regional symbiont niche minimum and maximum
+  #sERmax <- 50
+  Earray <- sort(runif(2, sERmin, sERmax))
   
   event_names <- c("birth", "death", "colon", "rains", "recov", "cntct")
   event_index <- rep(1:cells, times=4)
@@ -34,122 +17,116 @@ mpi_f <- function(iter=1, nER=1, maxt=1, H=10, nS=10,
   symb_index <- rep(1:nS, each=H)
   non_cntct_indices <- 4*cells + H*nS # for ratefun extraction
   
-  for (i in 1:nER){
-    for (j in 1:iter){
-      # initialize state arrays, time objects, and abundance counters
-      state <- array(0, dim=c(2, cells))
-      state_unchanged <- 0
-      n.ind <- array(dim=c(maxt, H))
-      n.ind[1, ] <- 0
-      s.ind <- array(dim=c(maxt, nS))
-      s.ind[1, ] <- 0
-      rnames <- c(rep(c("birth", "death", "colon", "recov"), 
-                    each=cells), rep("rains", H*nS), rep("cntct", H*nS))
-      ev <- rep(NA, maxt) # event counter
-      ntrans <- length(rnames)
-      transctr <- rep(0, ntrans) # transition counter
-      n_contacts <- 0
-      successful_cntcts <- 0
-      win_t <- 0
-      amng_t <- 0
+  # initialize state arrays, time objects, and abundance counters
+  state <- array(0, dim=c(2, cells))
+  state_unchanged <- 0
+  n.ind <- array(dim=c(maxt, H))
+  n.ind[1, ] <- 0
+  s.ind <- array(dim=c(maxt, nS))
+  s.ind[1, ] <- 0
+  rnames <- c(rep(c("birth", "death", "colon", "recov"), 
+                each=cells), rep("rains", H*nS), rep("cntct", H*nS))
+  ev <- rep(NA, maxt) # event counter
+  ntrans <- length(rnames)
+  transctr <- rep(0, ntrans) # transition counter
+  n_contacts <- 0
+  successful_cntcts <- 0
+  win_t <- 0
+  amng_t <- 0
 
-      # initialize host community
-      hosts <- host_init(cells, H, pcol=1)
-      
-      # initialize symbionts and view niches
-      symbionts <- symb_init(H, S=nS, 
-                             sEmin = Earray[i, 1], sEmax = Earray[i, 2], 
-                             sERmin, sERmax, sig.s)
-      
-      # generate effects of infection on hosts
-      beta_d <- runif(1, beta_d_min, beta_d_max)
-      
-      # store parameters for later extraction
-      pars <- list(r = r, d = d, c = c, beta_d = beta_d,
-                   phi = phi, a_pen = a_pen, rs = rs,
-                   sig.s = sig.s,
-                   cells = cells, H=H, nS=nS,
-                   gamma= gamma, 
-                   hosts=hosts,
-                   symbionts=symbionts, 
-                   mode=mode, 
-                   host_index=host_index, symb_index=symb_index,
-                   non_cntct_indices = non_cntct_indices)
-      
-      t <- 0
-      t.out <- 0
-      t.int <- 1
-      tau <- NULL
-      
-      pb <- txtProgressBar(min=0, max=maxt, style=3)
-      while(t.int < maxt){
-        ratelist <- ratefun(state, pars)
-        tot.rates <- sum(ratelist)
-        stopifnot(!is.na(tot.rates))
-        stopifnot(all(ratelist >= 0))
-        tau[t.int] <- rexp(1, tot.rates)
-        event <- sample.int(ntrans, size=1, prob=ratelist)
-        event_type <- rnames[event]
-        ev[t.int] <- event_type
-        if (event_type=="cntct"){
-          # determine which host will be infected
-          h_sp <- host_index[event - non_cntct_indices]
-          cell_num <- which(state[1, ] == h_sp & state[2, ] == 0)[1]
-          # take first individual, they're exchangeable
-          n_contacts <- n_contacts + 1
-        } else {
-          if (event_type == "rains"){
-            # determine which host species and individual
-            h_sp <- host_index[event - 4*cells]
-            cell_num <- which(state[1, ] == h_sp & state[2, ] == 0)[1]
-            stopifnot(!is.na(cell_num))
-          } else {
-            stopifnot(event <= length(event_index))
-            cell_num <- event_index[event]
-          }
-        }
-        
-        # carry out action on chosen cell
-        nextstep <- ABMstep(state, event_type, 
-                            cell=cell_num, params=pars, event)
-        
-        # update time
-        t.int <- t.int + 1
-        t[t.int] <- t[t.int - 1] + tau[t.int-1]
-        
-        state_change <- !all(state == nextstep$state)
-        
-        if (state_change){
-          state <- nextstep$state
-          n.ind[t.int, ] <- tabulate(state[1, ], nbins=H)
-          s.ind[t.int, ] <- tabulate(state[2, ], nbins=nS)
-          t.out <- c(t.out, t[t.int])
-        } else {
-          state_unchanged <- state_unchanged + 1
-        }
-        setTxtProgressBar(pb, t.int)
+  # initialize host community
+  hosts <- host_init(cells, H, pcol=1)
+  
+  # initialize symbionts and view niches
+  symbionts <- symb_init(H, S=nS, 
+                         sEmin = Earray[1], sEmax = Earray[2], 
+                         sERmin, sERmax, sig.s)
+  
+  # generate effects of infection on hosts
+  beta_d <- runif(1, beta_d_min, beta_d_max)
+  
+  # store parameters for later extraction
+  pars <- list(r = r, d = d, c = c, beta_d = beta_d,
+               phi = phi, a_pen = a_pen, rs = rs,
+               sig.s = sig.s,
+               cells = cells, H=H, nS=nS,
+               gamma= gamma, 
+               hosts=hosts,
+               symbionts=symbionts, 
+               mode=mode, 
+               host_index=host_index, symb_index=symb_index,
+               non_cntct_indices = non_cntct_indices)
+  
+  t <- 0
+  t.out <- 0
+  t.int <- 1
+  tau <- NULL
+  
+  pb <- txtProgressBar(min=0, max=maxt, style=3)
+  while(t.int < maxt){
+    ratelist <- ratefun(state, pars)
+    tot.rates <- sum(ratelist)
+    stopifnot(!is.na(tot.rates))
+    stopifnot(all(ratelist >= 0))
+    tau[t.int] <- rexp(1, tot.rates)
+    event <- sample.int(ntrans, size=1, prob=ratelist)
+    event_type <- rnames[event]
+    ev[t.int] <- event_type
+    if (event_type=="cntct"){
+      # determine which host will be infected
+      h_sp <- host_index[event - non_cntct_indices]
+      cell_num <- which(state[1, ] == h_sp & state[2, ] == 0)[1]
+      # take first individual, they're exchangeable
+      n_contacts <- n_contacts + 1
+    } else {
+      if (event_type == "rains"){
+        # determine which host species and individual
+        h_sp <- host_index[event - 4*cells]
+        cell_num <- which(state[1, ] == h_sp & state[2, ] == 0)[1]
+        stopifnot(!is.na(cell_num))
+      } else {
+        stopifnot(event <= length(event_index))
+        cell_num <- event_index[event]
       }
-      
-      rich <- rep(NA, dim(s.ind)[1])
-      for (k in 1:dim(s.ind)[1]){
-        rich[k] <- sum(s.ind[k, ] > 0)
-      }
-
-      rich_bar[i, j] <- mean(rich)
-      stored_pars <- c(stored_pars, pars)
-      timesteps <- c(timesteps, t.int)
-    }  
+    }
+    
+    # carry out action on chosen cell
+    nextstep <- ABMstep(state, event_type, 
+                        cell=cell_num, params=pars, event)
+    
+    # update time
+    t.int <- t.int + 1
+    t[t.int] <- t[t.int - 1] + tau[t.int-1]
+    
+    state_change <- !all(state == nextstep$state)
+    
+    if (state_change){
+      state <- nextstep$state
+      n.ind[t.int, ] <- tabulate(state[1, ], nbins=H)
+      s.ind[t.int, ] <- tabulate(state[2, ], nbins=nS)
+      t.out <- c(t.out, t[t.int])
+    } else {
+      state_unchanged <- state_unchanged + 1
+    }
+    setTxtProgressBar(pb, t.int)
   }
+  
+  rich <- rep(NA, dim(s.ind)[1])
+  for (k in 1:dim(s.ind)[1]){
+    rich[k] <- sum(s.ind[k, ] > 0)
+  }
+
+  rich_bar <- mean(rich)
+  timesteps <- t.int
   
   na_steps <- is.na(n.ind[, 1])
   n.ind <- n.ind[!na_steps, ]
   s.ind <- s.ind[!na_steps, ]
   
-  res <- list(trans_bar = trans_bar, 
-              rich_bar = rich_bar, 
-              stored_pars = stored_pars,
+  res <- list(rich_bar = rich_bar, 
+              pars = pars,
               timesteps=timesteps,
-              ER = ER, 
+              ER = Earray[2] - Earray[1], 
               Earray = Earray, 
               n.ind = n.ind, 
               s.ind = s.ind,
