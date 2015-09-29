@@ -132,7 +132,6 @@ mpi_f <- function(maxt=1, H=10, nS=10,
               s.ind = s.ind,
               t=t.out,
               hosts=hosts, 
-              symbionts=symbionts, 
               state_unchanged=state_unchanged, 
               ev=ev)
   class(res) <- "symb"
