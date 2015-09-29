@@ -202,3 +202,10 @@ if (check) {
     theme(legend.background = element_rect(color="black", size=.5)) 
 }
 
+# removes duplicate sequences of repeated integers from a column
+sub_unique <- function(d, col){
+  d <- as.data.frame(d)
+  numcol <- which(names(d) == col)
+  keep <- cumsum(rle(d[, col])$length)
+  d[keep, ]
+}
