@@ -2,12 +2,14 @@
 source('continuous_time/mpi_f.R')
 source('continuous_time/helpers.R')
 library(reshape2)
+library(ggplot2)
 library(dplyr)
 library(doMC)
+
 registerDoMC(2)
 
 # Section 1: host diversity, symbiont richness, and transmission
-iter <- 10
+iter <- 4
 
 system.time(
   r <- foreach(icount(iter)) %dopar% {
@@ -36,11 +38,7 @@ mts$symbiont_richness <- melt(srich_ts) %>%
   select(value) %>%
   unlist()
 
-sub_unique <- function(d, col){
-  numcol <- which(names(d) == col)
-  keep <- cumsum(rle(d[, col])$length)
-  d[keep, ]
-}
+mts <- tbl_df(mts)
 
 ggplot(sub_unique(mts, 'host_richness'), 
        aes(x=t, y=host_richness, group=iteration)) + 
@@ -49,3 +47,19 @@ ggplot(sub_unique(mts, 'host_richness'),
 ggplot(sub_unique(mts, 'symbiont_richness'), 
        aes(x=t, y=symbiont_richness, group=iteration)) + 
   geom_line(alpha=.5)
+
+up_lim <- 600
+low_lim <- 500
+
+mts$roundtime <- round(mts$t, 0)
+
+sum_d <- mts %>%
+  filter(roundtime < up_lim + 1, roundtime > low_lim - 1) %>%
+  sub_unique('roundtime') %>%
+  group_by(iteration) %>%
+  summarize(hmean = mean(host_richness),
+            hsd = sd(host_richness), 
+            smean = mean(symbiont_richness), 
+            ssd = sd(symbiont_richness), 
+            n=n())
+
