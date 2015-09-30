@@ -9,7 +9,7 @@ library(doMC)
 registerDoMC(2)
 
 # Section 1: host diversity, symbiont richness, and transmission
-iter <- 20
+iter <- 200
 
 system.time(
   r <- foreach(icount(iter)) %dopar% {
