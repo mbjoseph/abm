@@ -1,6 +1,6 @@
 # Parallel execution of host-symbiont analysis
-source('continuous_time/mpi_f.R')
-source('continuous_time/helpers.R')
+source('R/mpi_f.R')
+source('R/helpers.R')
 library(reshape2)
 library(ggplot2)
 library(dplyr)
@@ -9,15 +9,21 @@ library(doMC)
 registerDoMC(2)
 
 # Section 1: host diversity, symbiont richness, and transmission
-iter <- 200
+iter <- 1
+dir <- paste(getwd(), "/R/1-symbionts/sim_results", sep="")
 
 system.time(
   r <- foreach(icount(iter)) %dopar% {
     mpi_f(maxt=30000, nS=50, H=50, sig.s=1, c=.0001, 
             beta_d_min=0, beta_d_max=0, phi=10, r=.1, rs=1,
             mode="dens", cells=500, a_pen=1, gamma=0, d=.08)
+    saveRDS(r, file=paste0(dir, "/res-", 
+                           format(Sys.time(), "%b%d_%H:%M:%S"), ".RData"))
   }
 )
+
+data <- list.files(dir, pattern="res*")
+iter <- length(data)
 
 # calculate symbiont richness timeseries for each iteration
 rich_ts <- list()
@@ -25,16 +31,18 @@ srich_ts <- list()
 ts <- list()
 h_condition <- list()
 eff_diversity <- list()
+trans <- rep(NA, iter)
 
 for (i in 1:iter){
-  rich_ts[[i]] <- apply(r[[i]]$n.ind, 1, FUN=function(x) sum(x > 0))
-  srich_ts[[i]] <- apply(r[[i]]$s.ind, 1, FUN=function(x) sum(x > 0))
-  ts[[i]] <- r[[i]]$t
-  h_condition[[i]] <- r[[i]]$pars$symbionts$sniche.d %>%
+  d <- readRDS(paste(dir, data[i], sep="/"))
+  rich_ts[[i]] <- apply(d$n.ind, 1, FUN=function(x) sum(x > 0))
+  srich_ts[[i]] <- apply(d$s.ind, 1, FUN=function(x) sum(x > 0))
+  ts[[i]] <- d$t
+  h_condition[[i]] <- d$pars$symbionts$sniche.d %>%
     filter(symbiont.species == 1) %>%
     select(host.condition) %>%
     unlist()
-  eff_diversity[[i]] <- apply(r[[i]]$n.ind, 1, FUN = function(x){
+  eff_diversity[[i]] <- apply(d$n.ind, 1, FUN = function(x){
     present <- which(x > 0)
     if (!any(present)) {
       diversity <- 0
@@ -44,6 +52,8 @@ for (i in 1:iter){
     }
     diversity
     }) 
+  trans[i] <- sum(d$ev == 'cntct', na.rm=T) / max(d$t)
+  rm(d)
 }
 
 mdiv <- melt(eff_diversity)
@@ -83,7 +93,9 @@ sum_d <- mts %>%
             ssd = sd(symbiont_richness), 
             dmean = mean(functional_diversity),
             dsd = sd(functional_diversity),
+            cor_div = cor(host_richness, symbiont_richness),
             n=n())
+sum_d$trans <- trans[match(sum_d$iteration, 1:length(trans))]
 alph <- .5
 ggplot(sum_d, aes(x=dmean, y=smean)) + 
   geom_point(alpha=alph) + 
@@ -93,3 +105,19 @@ ggplot(sum_d, aes(x=dmean, y=smean)) +
                alpha=alph) +
   xlab('Functional diversity') + 
   ylab('Symbiont richness')
+
+ggplot(sum_d, aes(x=dmean, y=trans)) + 
+  geom_point(alpha=alph) + 
+  xlab('Functional diversity') + 
+  ylab('Transmission rate')
+
+ggplot(sum_d, aes(x=smean, y=trans)) + 
+  geom_point(alpha=alph) + 
+  xlab('Symbiont richness') + 
+  ylab('Transmission rate')
+
+ggplot(sum_d, aes(x=dmean, y=cor_div)) + 
+  geom_point(alpha=alph) + 
+  xlab('Functional diversity') + 
+  ylab('Correlation: host and symbiont richness') + 
+  geom_abline(yintercept=0, slope=0, linetype='dashed')
