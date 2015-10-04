@@ -9,7 +9,7 @@ library(doMC)
 registerDoMC(2)
 
 # Section 1: host diversity, symbiont nichewidth, and transmission
-iter <- 10
+iter <- 1000
 dir <- paste(getwd(), "/R/2-nichewidth/sim_results", sep="")
 sigma_max <- 50
 sigma_min <- .5
@@ -101,7 +101,7 @@ sum_d <- mts %>%
 sum_d$trans <- trans[match(sum_d$iteration, 1:length(trans))]
 sum_d$sigma_s <- sigma_s[match(sum_d$iteration, 1:length(trans))]
 library(gtools)
-sum_d$sigma_bin <- quantcut(sum_d$sigma_s, q=9)
+sum_d$sigma_bin <- quantcut(sum_d$sigma_s, q=6)
 alph <- .7
 ggplot(sum_d, aes(x=dmean, y=smean, color=sigma_s)) + 
   geom_point(alpha=alph) + 
@@ -123,6 +123,16 @@ ggplot(sum_d, aes(x=dmean, y=smean, color=sigma_bin)) +
   ylab('Symbiont richness') + 
   facet_wrap(~sigma_bin) + 
   stat_smooth()
+
+ggplot(sum_d, aes(x=dmean, y=smean, color=sigma_bin)) + 
+  geom_point(alpha=.1) + 
+#  geom_segment(aes(x=dmean, xend=dmean, y=smean - ssd, yend = smean + ssd), 
+#               alpha=alph) +
+#  geom_segment(aes(x=dmean - dsd, xend=dmean + dsd, y=smean, yend=smean), 
+#               alpha=alph) +
+  xlab('Functional diversity') + 
+  ylab('Symbiont richness') + 
+  stat_smooth(method=lm, formula=y ~ x + I(x^2))
 
 
 ggplot(sum_d, aes(x=dmean, y=trans, color=sigma_s)) + 
