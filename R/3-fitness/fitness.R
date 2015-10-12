@@ -9,12 +9,12 @@ library(doMC)
 registerDoMC(2)
 
 # Section 1: host diversity, symbiont nichewidth, and transmission
-iter <- 10
+iter <- 1000
 dir <- paste(getwd(), "/R/3-fitness/sim_results", sep="")
 
 foreach(icount(iter)) %dopar% {
   r <- mpi_f(maxt=30000, nS=50, H=50, sig.s=1, c=.0001, 
-             beta_d_min=-.99, beta_d_max=.99, phi=10, r=.1, rs=1,
+             beta_d_min=-.99, beta_d_max=10, phi=10, r=.1, rs=1,
              mode="dens", cells=500, a_pen=1, gamma=0, d=.08)
   saveRDS(r, file=paste0(dir, "/res-", 
                          format(Sys.time(), "%b%d_%H:%M:%S"), ".RData"))
