@@ -99,7 +99,7 @@ sum_d <- mts %>%
 sum_d$trans <- trans[match(sum_d$iteration, 1:length(trans))]
 sum_d$beta_d <- beta_d[match(sum_d$iteration, 1:length(trans))]
 library(gtools)
-sum_d$sigma_bin <- quantcut(sum_d$beta_d, q=6)
+sum_d$beta_bin <- quantcut(sum_d$beta_d, q=6)
 alph <- .7
 ggplot(sum_d, aes(x=dmean, y=smean, color=beta_d)) + 
   geom_point(alpha=alph) + 
@@ -111,7 +111,7 @@ ggplot(sum_d, aes(x=dmean, y=smean, color=beta_d)) +
   ylab('Symbiont richness') + 
   scale_color_gradientn(colours=rainbow(3))
 
-ggplot(sum_d, aes(x=dmean, y=smean, color=sigma_bin)) + 
+ggplot(sum_d, aes(x=dmean, y=smean, color=beta_bin)) + 
   geom_point(alpha=alph) + 
   geom_segment(aes(x=dmean, xend=dmean, y=smean - ssd, yend = smean + ssd), 
                alpha=alph) +
@@ -119,10 +119,10 @@ ggplot(sum_d, aes(x=dmean, y=smean, color=sigma_bin)) +
                alpha=alph) +
   xlab('Functional diversity') + 
   ylab('Symbiont richness') + 
-  facet_wrap(~sigma_bin) + 
+  facet_wrap(~beta_bin) + 
   stat_smooth()
 
-ggplot(sum_d, aes(x=dmean, y=smean, color=sigma_bin)) + 
+ggplot(sum_d, aes(x=dmean, y=smean, color=beta_bin)) + 
   geom_point(alpha=.1) + 
   #  geom_segment(aes(x=dmean, xend=dmean, y=smean - ssd, yend = smean + ssd), 
   #               alpha=alph) +

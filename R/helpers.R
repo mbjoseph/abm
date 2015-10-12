@@ -157,7 +157,12 @@ symb_init <- function(H, S, sEmin, sEmax, sERmin, sERmax, sig.s){
   mu.s <- runif(S, sERmin, sERmax)
   
   # symbiont niche width
-  sigma.s <- rep(sig.s, S) 
+  if (length(sig.s) == 1){
+    sigma.s <- rep(sig.s, S)    
+  } else {
+    stopifnot(length(sig.s) == S)
+    sigma.s <- sig.s
+  }
   
   # calculate symbiont Z
   sZ <- rep(NA, S)

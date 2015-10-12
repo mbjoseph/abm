@@ -163,7 +163,8 @@ plot.symb <- function(res, ...){
 check <- FALSE
 
 if (check){
-  system.time(testout <- mpi_f(maxt=10000, nS=100, H=100, sig.s=10, c=.0001, 
+  system.time(testout <- mpi_f(maxt=10000, nS=100, H=100, sig.s=runif(100, .5, 50), 
+                               c=.0001, 
                                beta_d_min=0, beta_d_max=0, phi=10, r=.1, rs=1,
                                mode="dens", cells=100, a_pen=1, gamma=0, d=.08))
   # view timeseries
@@ -195,7 +196,7 @@ if (check){
   
   library(ggplot2)
   # view niches
-  ggplot(testout$symbionts$sniche.d, 
+  ggplot(testout$pars$symbionts$sniche.d, 
          aes(x=host.condition, y=Pr.estab)) + 
     geom_line(aes(col=factor(symbiont.species), group=factor(symbiont.species)), size=2) + 
     theme_classic() + 
