@@ -1,7 +1,7 @@
 mpi_f <- function(maxt=1, H=10, nS=10, 
                   a_pen=1, sig.s=10, rs=.1, gamma=0.1, 
                   cells=100, r=2, d=.1, sERmin=-50, sERmax=50,
-                  beta_d_min=0, beta_d_max=0,
+                  beta_d_min=0, beta_d_max=0, vary_beta = FALSE, 
                   c=.1, phi=5, mode="dens"){
   stopifnot(mode == "dens" | mode == "freq")
 
@@ -43,7 +43,11 @@ mpi_f <- function(maxt=1, H=10, nS=10,
                          sERmin, sERmax, sig.s)
   
   # generate effects of infection on hosts
-  beta_d <- runif(1, beta_d_min, beta_d_max)
+  if (vary_beta){
+    beta_d <- runif(nS, beta_d_min, beta_d_max)
+  } else {
+    beta_d <- runif(1, beta_d_min, beta_d_max)    
+  }
   
   # store parameters for later extraction
   pars <- list(r = r, d = d, c = c, beta_d = beta_d,
@@ -55,7 +59,8 @@ mpi_f <- function(maxt=1, H=10, nS=10,
                symbionts=symbionts, 
                mode=mode, 
                host_index=host_index, symb_index=symb_index,
-               non_cntct_indices = non_cntct_indices)
+               non_cntct_indices = non_cntct_indices, 
+               vary_beta = vary_beta)
   
   t <- 0
   t.out <- 0
@@ -165,7 +170,8 @@ check <- FALSE
 if (check){
   system.time(testout <- mpi_f(maxt=10000, nS=100, H=100, sig.s=runif(100, .5, 50), 
                                c=.0001, 
-                               beta_d_min=0, beta_d_max=0, phi=10, r=.1, rs=1,
+                               beta_d_min=-1, beta_d_max=100, vary_beta=TRUE,
+                               phi=10, r=.1, rs=1,
                                mode="dens", cells=100, a_pen=1, gamma=0, d=.08))
   # view timeseries
   plot(testout)

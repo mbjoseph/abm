@@ -27,7 +27,13 @@ ratefun <- function(state, params){
   s_occ <- state[2, ] > 0 # symbiont slots occupied
   res[1, x_occ] <- params$r                                   # birth
   res[2, x_occ & !s_occ] <- params$d                          # death uninfect
-  res[2, x_occ & s_occ] <- params$d * (1 + params$beta_d)     # death infect
+  if (length(params$beta_d) == 1){
+    res[2, x_occ & s_occ] <- params$d * (1 + params$beta_d)     # death infect
+  } else {
+    # symbionts have variable fitness effects
+    beta_vals <- params$beta_d[state[2, ][s_occ]]
+    res[2, x_occ & s_occ] <- params$d * (1 + beta_vals)
+  }
   res[3, !x_occ] <- params$c * params$H                       # colon
   res[4, s_occ & s_occ] <- params$gamma                       # recov
   
