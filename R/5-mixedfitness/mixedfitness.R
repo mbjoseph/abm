@@ -9,7 +9,7 @@ library(doMC)
 registerDoMC(2)
 
 # Section 1: host diversity, symbiont nichewidth, and transmission
-iter <- 10
+iter <- 1000
 dir <- paste(getwd(), "/R/5-mixedfitness/sim_results", sep="")
 beta_max <- 10
 beta_min <- -.99
@@ -80,11 +80,11 @@ mts <- tbl_df(mts)
 
 ggplot(sub_unique(mts, 'host_richness'), 
        aes(x=t, y=host_richness, group=iteration)) + 
-  geom_line(alpha=.5)
+  geom_line(alpha=.01)
 
 ggplot(sub_unique(mts, 'symbiont_richness'), 
        aes(x=t, y=symbiont_richness, group=iteration)) + 
-  geom_line(alpha=.5)
+  geom_line(alpha=.01)
 
 up_lim <- 600
 low_lim <- 400
@@ -104,15 +104,15 @@ sum_d <- mts %>%
             cor_div = cor(host_richness, symbiont_richness),
             n=n())
 sum_d$trans <- trans[match(sum_d$iteration, 1:length(trans))]
-ss <- melt(sigma_s)
-names(ss) <- c('symbiont', 'iteration', 'niche_width')
+bs <- melt(beta_s)
+names(bs) <- c('symbiont', 'iteration', 'beta_d')
 mtrans <- melt(trans_each)
 names(mtrans) <- c('symbiont', 'iteration', 'trans')
-jt <- full_join(ss, mtrans)
+jt <- full_join(bs, mtrans)
 jt$dmean <- sum_d$dmean[match(jt$iteration, sum_d$iteration)]
 jt$smean <- sum_d$smean[match(jt$iteration, sum_d$iteration)]
 
-ggplot(jt, aes(x=dmean, y=trans, color=niche_width)) + 
+ggplot(jt, aes(x=dmean, y=trans, color=beta_d)) + 
   geom_point(alpha=.5) +
   xlab('Functional diversity') + 
   ylab('Symbiont transmission & colonization') + 
@@ -120,18 +120,18 @@ ggplot(jt, aes(x=dmean, y=trans, color=niche_width)) +
 
 
 library(gtools)
-jt$sigma_bin <- quantcut(jt$niche_width, q=6)
+jt$beta_bin <- quantcut(jt$beta_d, q=12)
 alph <- .3
 ggplot(jt, aes(x=dmean, y=smean)) + 
   geom_point(alpha=alph) + 
   xlab('Functional diversity') + 
   ylab('Symbiont richness')
 
-ggplot(jt, aes(x=dmean, y=trans, color=sigma_bin)) + 
+ggplot(jt, aes(x=dmean, y=trans, color=beta_bin)) + 
   geom_point(alpha=.2) +
   xlab('Functional diversity') + 
   ylab('Symbiont transmission & colonization') + 
-  facet_wrap(~sigma_bin)
+  facet_wrap(~beta_bin)
 
 ggplot(sum_d, aes(x=dmean, y=cor_div)) + 
   geom_point(alpha=alph) + 
