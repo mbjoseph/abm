@@ -9,7 +9,7 @@ library(doMC)
 registerDoMC(2)
 
 # Section 1: host diversity, symbiont nichewidth, and transmission
-iter <- 10
+iter <- 1000
 dir <- paste(getwd(), "/R/4-mixedniche/sim_results", sep="")
 sigma_max <- 50
 sigma_min <- .5
@@ -35,6 +35,7 @@ ts <- list()
 h_condition <- list()
 eff_diversity <- list()
 trans <- rep(NA, iter)
+trans_each <- array(dim=c(nS, iter))
 sigma_s <- array(dim=c(nS, iter))
 
 for (i in 1:iter){
@@ -57,6 +58,8 @@ for (i in 1:iter){
     diversity
   }) 
   trans[i] <- sum(d$ev == 'cntct', na.rm=T) / max(d$t)
+  # calculate colonization & transmission rates for each symbiont species
+  trans_each[, i] <- apply(d$s.ind, 2, FUN=function(x) sum(diff(x) == 1) / max(d$t))
   sigma_s[, i] <- d$pars$sig.s
   rm(d)
 }
@@ -101,57 +104,37 @@ sum_d <- mts %>%
             cor_div = cor(host_richness, symbiont_richness),
             n=n())
 sum_d$trans <- trans[match(sum_d$iteration, 1:length(trans))]
-sum_d$sigma_s <- sigma_s[match(sum_d$iteration, 1:length(trans))]
+ss <- melt(sigma_s)
+names(ss) <- c('symbiont', 'iteration', 'niche_width')
+mtrans <- melt(trans_each)
+names(mtrans) <- c('symbiont', 'iteration', 'trans')
+jt <- full_join(ss, mtrans)
+jt$dmean <- sum_d$dmean[match(jt$iteration, sum_d$iteration)]
+jt$smean <- sum_d$smean[match(jt$iteration, sum_d$iteration)]
+
+ggplot(jt, aes(x=dmean, y=trans, color=niche_width)) + 
+  geom_point(alpha=.5) +
+  xlab('Functional diversity') + 
+  ylab('Symbiont transmission & colonization') + 
+  scale_color_gradientn(colours=rainbow(3))
+
+
 library(gtools)
-sum_d$sigma_bin <- quantcut(sum_d$sigma_s, q=6)
-alph <- .7
-ggplot(sum_d, aes(x=dmean, y=smean, color=sigma_s)) + 
+jt$sigma_bin <- quantcut(jt$niche_width, q=6)
+alph <- .3
+ggplot(jt, aes(x=dmean, y=smean)) + 
   geom_point(alpha=alph) + 
-  #  geom_segment(aes(x=dmean, xend=dmean, y=smean - ssd, yend = smean + ssd), 
-  #               alpha=alph) +
-  #  geom_segment(aes(x=dmean - dsd, xend=dmean + dsd, y=smean, yend=smean), 
-  #               alpha=alph) +
   xlab('Functional diversity') + 
-  ylab('Symbiont richness') + 
-  scale_color_gradientn(colours=rainbow(3))
+  ylab('Symbiont richness')
 
-ggplot(sum_d, aes(x=dmean, y=smean, color=sigma_bin)) + 
-  geom_point(alpha=alph) + 
-  geom_segment(aes(x=dmean, xend=dmean, y=smean - ssd, yend = smean + ssd), 
-               alpha=alph) +
-  geom_segment(aes(x=dmean - dsd, xend=dmean + dsd, y=smean, yend=smean), 
-               alpha=alph) +
+ggplot(jt, aes(x=dmean, y=trans, color=sigma_bin)) + 
+  geom_point(alpha=.2) +
   xlab('Functional diversity') + 
-  ylab('Symbiont richness') + 
-  facet_wrap(~sigma_bin) + 
-  stat_smooth()
+  ylab('Symbiont transmission & colonization') + 
+  facet_wrap(~sigma_bin)
 
-ggplot(sum_d, aes(x=dmean, y=smean, color=sigma_bin)) + 
-  geom_point(alpha=.1) + 
-  #  geom_segment(aes(x=dmean, xend=dmean, y=smean - ssd, yend = smean + ssd), 
-  #               alpha=alph) +
-  #  geom_segment(aes(x=dmean - dsd, xend=dmean + dsd, y=smean, yend=smean), 
-  #               alpha=alph) +
-  xlab('Functional diversity') + 
-  ylab('Symbiont richness') + 
-  stat_smooth(method=lm, formula=y ~ x + I(x^2))
-
-
-ggplot(sum_d, aes(x=dmean, y=trans, color=sigma_s)) + 
-  geom_point(alpha=1) + 
-  xlab('Functional diversity') + 
-  ylab('Transmission rate') + 
-  scale_color_gradientn(colours=rainbow(3))
-
-ggplot(sum_d, aes(x=smean, y=trans, color=sigma_s)) + 
-  geom_point(alpha=1) + 
-  xlab('Symbiont richness') + 
-  ylab('Transmission rate') + 
-  scale_color_gradientn(colours=rainbow(3))
-
-ggplot(sum_d, aes(x=dmean, y=cor_div, color=sigma_s)) + 
+ggplot(sum_d, aes(x=dmean, y=cor_div)) + 
   geom_point(alpha=alph) + 
   xlab('Functional diversity') + 
   ylab('Correlation: host and symbiont richness') + 
-  geom_abline(yintercept=0, slope=0, linetype='dashed') + 
-  scale_color_gradientn(colours=rainbow(3))
+  geom_abline(yintercept=0, slope=0, linetype='dashed')
