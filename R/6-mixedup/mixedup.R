@@ -9,8 +9,8 @@ library(doMC)
 registerDoMC(2)
 
 # Section 1: host diversity, symbiont nichewidth, and transmission
-iter <- 1000
-dir <- paste(getwd(), "/R/5-mixedfitness/sim_results", sep="")
+iter <- 10
+dir <- paste(getwd(), "/R/6-mixedup/sim_results", sep="")
 beta_max <- .99
 beta_min <- -.99
 nS <- 50
@@ -37,6 +37,8 @@ eff_diversity <- list()
 trans <- rep(NA, iter)
 trans_each <- array(dim=c(nS, iter))
 beta_s <- array(dim=c(nS, iter))
+sigma_s <- array(dim=c(nS, iter))
+
 
 for (i in 1:iter){
   d <- readRDS(paste(dir, data[i], sep="/"))
@@ -60,6 +62,7 @@ for (i in 1:iter){
   trans[i] <- sum(d$ev == 'cntct', na.rm=T) / max(d$t)
   # calculate colonization & transmission rates for each symbiont species
   trans_each[, i] <- apply(d$s.ind, 2, FUN=function(x) sum(diff(x) == 1) / max(d$t))
+  sigma_s <- d$pars$sigma_s
   beta_s[, i] <- d$pars$beta_d
   rm(d)
 }
