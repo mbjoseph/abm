@@ -33,6 +33,7 @@ h_condition <- list()
 eff_diversity <- list()
 trans <- rep(NA, iter)
 
+pb <- txtProgressBar(max=iter, style=3)
 for (i in 1:iter){
   d <- readRDS(paste(dir, data[i], sep="/"))
   rich_ts[[i]] <- apply(d$n.ind, 1, FUN=function(x) sum(x > 0))
@@ -54,6 +55,7 @@ for (i in 1:iter){
     }) 
   trans[i] <- sum(d$ev == 'cntct', na.rm=T) / max(d$t)
   rm(d)
+  setTxtProgressBar(pb, i)
 }
 
 mdiv <- melt(eff_diversity)
@@ -72,11 +74,11 @@ mts <- tbl_df(mts)
 
 ggplot(sub_unique(mts, 'host_richness'), 
        aes(x=t, y=host_richness, group=iteration)) + 
-  geom_line(alpha=.5)
+  geom_line(alpha=.2)
 
 ggplot(sub_unique(mts, 'symbiont_richness'), 
        aes(x=t, y=symbiont_richness, group=iteration)) + 
-  geom_line(alpha=.5)
+  geom_line(alpha=.07)
 
 up_lim <- 600
 low_lim <- 400
@@ -99,10 +101,10 @@ sum_d$trans <- trans[match(sum_d$iteration, 1:length(trans))]
 alph <- .5
 ggplot(sum_d, aes(x=dmean, y=smean)) + 
   geom_point(alpha=alph) + 
-  geom_segment(aes(x=dmean, xend=dmean, y=smean - ssd, yend = smean + ssd), 
-               alpha=alph) +
-  geom_segment(aes(x=dmean - dsd, xend=dmean + dsd, y=smean, yend=smean), 
-               alpha=alph) +
+  #geom_segment(aes(x=dmean, xend=dmean, y=smean - ssd, yend = smean + ssd), 
+  #             alpha=alph) +
+  #geom_segment(aes(x=dmean - dsd, xend=dmean + dsd, y=smean, yend=smean), 
+  #             alpha=alph) +
   xlab('Functional diversity') + 
   ylab('Symbiont richness')
 
@@ -120,4 +122,4 @@ ggplot(sum_d, aes(x=dmean, y=cor_div)) +
   geom_point(alpha=alph) + 
   xlab('Functional diversity') + 
   ylab('Correlation: host and symbiont richness') + 
-  geom_abline(yintercept=0, slope=0, linetype='dashed')
+  geom_hline(yintercept=0, linetype='dashed')
