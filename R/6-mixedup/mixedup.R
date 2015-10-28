@@ -17,7 +17,7 @@ sigma_min <- .5
 nS <- 50
 
 foreach(icount(iter)) %dopar% {
-  r <- mpi_f(maxt=30000, nS=nS, H=50, sig.s=runif(nS, sigma_min, sigma_max), 
+  r <- mpi_f(maxt=60000, nS=nS, H=50, sig.s=runif(nS, sigma_min, sigma_max), 
              c=.0001, vary_beta=TRUE,
              beta_d_min=beta_min, beta_d_max=beta_max, phi=10, r=.1, rs=1,
              mode="dens", cells=500, a_pen=1, gamma=0, d=.08)
@@ -98,8 +98,8 @@ ggplot(sub_unique(mts, 'functional_diversity'),
        aes(x=t, y=functional_diversity, group=iteration)) + 
   geom_line(alpha=.1)
 
-up_lim <- 600
-low_lim <- 0#400
+up_lim <- 1000
+low_lim <- 500#400
 
 mts$roundtime <- round(mts$t, 0)
 
