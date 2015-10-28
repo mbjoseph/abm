@@ -125,10 +125,13 @@ ggplot(sub_unique(mts, 'symbiont_richness'),
 
 ggplot(sub_unique(mts, 'symbiont_richness'), 
        aes(x=t, y=mutualist_richness, group=iteration)) + 
-  stat_smooth(col='blue', se=FALSE, size=.05) + 
-  stat_smooth(data=sub_unique(mts, 'symbiont_richness'), 
+  geom_line(stat='smooth', alpha=.4, col='blue', se=FALSE, size=.05, 
+            method = "loess") + 
+  geom_line(stat='smooth', alpha=.4, 
+            data=sub_unique(mts, 'symbiont_richness'), 
             aes(x=t, y=parasite_richness, group=iteration), 
-            col='red', se=FALSE, size=.05) + 
+            col='red', se=FALSE, size=.05, 
+            method = "loess") + 
   #geom_vline(xintercept=200) + 
   #stat_smooth(alpha=.1, se=FALSE, fill='blue', size=.1) + 
   ylim(0, 17) + xlim(0, 1000)
@@ -137,8 +140,8 @@ ggplot(sub_unique(mts, 'functional_diversity'),
        aes(x=t, y=functional_diversity, group=iteration)) + 
   geom_line(alpha=.1)
 
-up_lim <- 600
-low_lim <- 0#400
+up_lim <- 1000
+low_lim <- 500#400
 
 mts$roundtime <- round(mts$t, 0)
 
@@ -174,26 +177,15 @@ ggplot(jt, aes(x=dmean, y=trans, color=beta_d)) +
   scale_color_gradientn(colours=rainbow(3))
 
 library(gtools)
-n_bin <- 5
+n_bin <- 3
 jt$beta_bin <- quantcut(jt$beta_d, q=n_bin)
 jt$sigma_bin <- quantcut(jt$niche_width, q=n_bin)
 alph <- .3
-
-ggplot(jt, aes(x=dmean, y=smean)) + 
-  geom_point(alpha=alph) + 
-  xlab('Functional diversity') + 
-  ylab('Symbiont richness')
 
 ggplot(sum_d, aes(x=dmean, y=smean)) + 
   geom_point() + 
   xlab('Functional diversity') + 
   ylab('Symbiont richness')
-
-ggplot(jt, aes(x=dmean, y=smean)) + 
-  geom_point(alpha=alph) + 
-  xlab('Functional diversity') + 
-  ylab('Symbiont richness') + 
-  facet_grid(sigma_bin~beta_bin)
 
 ggplot(jt, aes(x=dmean, y=trans)) + 
   geom_point(alpha=.2) +
@@ -205,4 +197,4 @@ ggplot(sum_d, aes(x=dmean, y=cor_div)) +
   geom_point(alpha=alph) + 
   xlab('Functional diversity') + 
   ylab('Correlation: host and symbiont richness') + 
-  geom_abline(yintercept=0, slope=0, linetype='dashed')
+  geom_hline(yintercept=0, linetype='dashed')
