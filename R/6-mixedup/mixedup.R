@@ -32,6 +32,8 @@ iter <- length(data)
 # calculate symbiont richness timeseries for each iteration
 rich_ts <- list()
 srich_ts <- list()
+paras_rich <- list()
+mutua_rich <- list()
 ts <- list()
 h_condition <- list()
 eff_diversity <- list()
@@ -45,6 +47,10 @@ for (i in 1:iter){
   d <- readRDS(paste(dir, data[i], sep="/"))
   rich_ts[[i]] <- apply(d$n.ind, 1, FUN=function(x) sum(x > 0))
   srich_ts[[i]] <- apply(d$s.ind, 1, FUN=function(x) sum(x > 0))
+  paras_rich[[i]] <- apply(d$s.ind[, d$pars$beta_d > 0], 1, 
+                           FUN=function(x) sum(x > 0))
+  mutua_rich[[i]] <- apply(d$s.ind[, d$pars$beta_d < 0], 1, 
+                           FUN=function(x) sum(x > 0))
   ts[[i]] <- d$t
   h_condition[[i]] <- d$pars$symbionts$sniche.d %>%
     filter(symbiont.species == 1) %>%
@@ -79,6 +85,12 @@ mts$t <- melt(ts) %>%
 mts$symbiont_richness <- melt(srich_ts) %>%
   select(value) %>%
   unlist()
+mts$parasite_richness <- melt(paras_rich) %>%
+  select(value) %>%
+  unlist()
+mts$mutualist_richness <- melt(mutua_rich) %>%
+  select(value) %>%
+  unlist()
 mts$functional_diversity <- mdiv$value
 
 mts <- tbl_df(mts)
@@ -89,10 +101,37 @@ ggplot(sub_unique(mts, 'host_richness'),
 
 ggplot(sub_unique(mts, 'symbiont_richness'), 
        aes(x=t, y=symbiont_richness, group=iteration)) + 
-  geom_line(alpha=.01) + 
-  geom_vline(xintercept=200) + 
-  stat_smooth(alpha=.1, se=FALSE, fill='blue', size=.1) + 
-  ylim(0, 22)
+  geom_line(alpha=.05) + 
+  #geom_vline(xintercept=200) + 
+  #stat_smooth(alpha=.1, se=FALSE, fill='blue', size=.1) + 
+  ylim(0, 22) + xlim(0, 1000)
+
+ggplot(sub_unique(mts, 'symbiont_richness'), 
+       aes(x=t, y=parasite_richness, group=iteration)) + 
+  geom_line(alpha=.1) + 
+  #geom_vline(xintercept=200) + 
+  #stat_smooth(alpha=.1, se=FALSE, fill='blue', size=.1) + 
+  ylim(0, 22) + xlim(0, 1000)
+
+ggplot(sub_unique(mts, 'symbiont_richness'), 
+       aes(x=t, y=mutualist_richness, group=iteration)) + 
+  geom_line(alpha=.03, col='blue') + 
+  geom_line(data=sub_unique(mts, 'symbiont_richness'), 
+            aes(x=t, y=parasite_richness, group=iteration), 
+            alpha=.03, col='red') + 
+  #geom_vline(xintercept=200) + 
+  #stat_smooth(alpha=.1, se=FALSE, fill='blue', size=.1) + 
+  ylim(0, 22) + xlim(0, 1000)
+
+ggplot(sub_unique(mts, 'symbiont_richness'), 
+       aes(x=t, y=mutualist_richness, group=iteration)) + 
+  stat_smooth(col='blue', se=FALSE, size=.05) + 
+  stat_smooth(data=sub_unique(mts, 'symbiont_richness'), 
+            aes(x=t, y=parasite_richness, group=iteration), 
+            col='red', se=FALSE, size=.05) + 
+  #geom_vline(xintercept=200) + 
+  #stat_smooth(alpha=.1, se=FALSE, fill='blue', size=.1) + 
+  ylim(0, 17) + xlim(0, 1000)
 
 ggplot(sub_unique(mts, 'functional_diversity'), 
        aes(x=t, y=functional_diversity, group=iteration)) + 
