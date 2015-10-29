@@ -6,21 +6,23 @@ library(ggplot2)
 library(dplyr)
 library(doMC)
 
-registerDoMC(2)
+registerDoMC(4)
 
 # Section 1: host diversity, symbiont richness, and transmission
-iter <- 1
+iter <- 990
 dir <- paste(getwd(), "/R/1-symbionts/sim_results", sep="")
 
+op <- options(digits.secs =7)
 system.time(
-  r <- foreach(icount(iter)) %dopar% {
+foreach(icount(iter)) %dopar% {
     mpi_f(maxt=30000, nS=50, H=50, sig.s=1, c=.0001, 
             beta_d_min=0, beta_d_max=0, phi=10, r=.1, rs=1,
-            mode="dens", cells=500, a_pen=1, gamma=0, d=.08)
-    saveRDS(r, file=paste0(dir, "/res-", 
-                           format(Sys.time(), "%b%d_%H:%M:%S"), ".RData"))
+            mode="dens", cells=500, a_pen=1, gamma=0, d=.08) %>%
+    saveRDS(file=paste0(dir, "/res-", 
+                        Sys.time(), ".RData"))
   }
 )
+options(op)
 
 data <- list.files(dir, pattern="res*")
 iter <- length(data)
