@@ -157,5 +157,5 @@ myplot3 <- arrangeGrob(p3, top = textGrob("C",
                                           x = unit(xj, "npc"), 
                                           y = unit(yj, "npc"), 
                                           just = c("left","top")))
-grid.arrange(myplot1, myplot2, myplot3, ncol=3)
-dev.copy2pdf(file="paper/fig/fig1.pdf", width = 12, height = 4)
+grid.arrange(myplot1, myplot2, ncol=2)
+dev.copy2pdf(file="paper/fig/fig1.pdf", width = 8, height = 4)
