@@ -118,13 +118,13 @@ p1 <- ggplot(sum_d, aes(x=dmean, y=smean)) +
   #             alpha=alph) +
   #geom_segment(aes(x=dmean - dsd, xend=dmean + dsd, y=smean, yend=smean), 
   #             alpha=alph) +
-  xlab('Functional diversity') + 
+  xlab('Host functional diversity') + 
   ylab('Symbiont richness')
 p1 
 
 p2 <- ggplot(sum_d, aes(x=dmean, y=trans)) + 
   geom_point(alpha=alph) + 
-  xlab('Functional diversity') + 
+  xlab('Host functional diversity') + 
   ylab('Transmission rate')
 p2
 
@@ -133,15 +133,15 @@ ggplot(sum_d, aes(x=smean, y=trans)) +
   xlab('Symbiont richness') + 
   ylab('Transmission rate')
 
-p3 <- ggplot(sum_d, aes(x=dmean, y=cor_div)) + 
+ggplot(sum_d, aes(x=dmean, y=cor_div)) + 
   geom_point(alpha=alph) + 
   xlab('Functional diversity') + 
   ylab('Correlation: host and symbiont richness') + 
   geom_hline(yintercept=0, linetype='dashed')
-p3
 
-multiplot(p1, p2, p3, cols=3)
 
+library(gridExtra)
+librar
 xj <- .1
 yj <- .6
 
