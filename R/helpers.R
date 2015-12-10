@@ -193,7 +193,7 @@ symb_init <- function(H, S, sEmin, sEmax, sERmin, sERmax, sig.s){
   host.condition <- rep(Xe, S)
   Pr.estab <- c(Pcol)
   sniche.d <- data.frame(symbiont.species, host.condition, Pr.estab)
-  return(list(sniche.d = sniche.d, Pcol = Pcol))
+  return(list(sniche.d = sniche.d, Pcol = Pcol, mu.s = mu.s, sig.s = sig.s))
 }
 
 # test 
