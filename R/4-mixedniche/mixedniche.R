@@ -34,6 +34,7 @@ if (!("res.Rdata" %in% list.files(paste(getwd(), "/R/4-mixedniche/", sep="")))) 
   # calculate symbiont richness timeseries for each iteration
   rich_ts <- list()
   srich_ts <- list()
+  sbreadth_ts <- list()
   ts <- list()
   h_condition <- list()
   eff_diversity <- list()
@@ -64,6 +65,10 @@ if (!("res.Rdata" %in% list.files(paste(getwd(), "/R/4-mixedniche/", sep="")))) 
     # calculate colonization & transmission rates for each symbiont species
     trans_each[, i] <- apply(d$s.ind, 2, FUN=function(x) sum(diff(x) == 1) / max(d$t))
     sigma_s[, i] <- d$pars$sig.s
+    # calculate mean niche breadth at each timestep
+    # weighted version
+    niche_ab <- apply(d$s.ind, 1, function(x) x * d$pars$sig.s)
+    sbreadth_ts[[i]] <- apply(niche_ab, 2, function(x) mean(x[x > 0]))
     rm(d)
   }
   save(list=ls(), file=paste(getwd(), "/R/4-mixedniche/res.Rdata", sep=""))

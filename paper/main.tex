@@ -39,11 +39,15 @@ General strategy:
 
 \section{Methods}
 
-We first develop a model for symbiont transmission that assumes static host communities that are neither reproducing nor dying. 
-The local community is made up of multiple species, each of which has some abundance within the community. 
-Host species vary in traits relevant to symbiont infection probability. 
+We developed a stochastic continuous-time agent-based model for the dynamics of host-symbiont communities in local habitat patches that are made up of a finite number of cells that may be occupied by hosts. 
+The local habitat patches are all considered to be equivalent with respect to host colonization, reproduction, and death. 
+Multiple host species exist within a regional pool, and each patch experiences a constant rate of host colonization, which is equal for all host species, although there is no displacement of occupying hosts by colonizing hosts. 
+Once a host colonizes a patch, it then has some rate of reproduction and of death that is constant among host species.
+
+Multiple types of symbionts occur in the regional pool and attempt to colonize host individuals with a constant rate. 
+Host species vary in traits relevant to symbiont establishment probability. 
 We assume for simplicity that this variation is unidimensional, as would be the case if there were one primary niche axis for the symbionts (e.g. pH of the host gut). 
-Symbiont niches are represented as gaussian functions with niche optima and breadths (means and variances, respectively) along this axis, such that the probability of successful infection for an individual host is a function of the host's value along the niche axis (Figure 1). 
+Symbiont niches are represented as univariate Gaussian functions with niche optima and breadths (means and variances, respectively), such that the probability of successful establishment on an individual host is a function of the host's value along the niche axis (Figure 1). 
 Each symbiont has the same total probability of colonizing in the regional pool as a result of adjusting the niche functions of symbiont species with niche optima near the boundaries of  the niche space of the regional pool (e.g. symbiont 2 in Figure 1).
 
 Every individual host has some constant probability of a symbiont from the regional pool attempting to infect, with an infection success probability being drawn from the symbiont niche function, given the host species condition. 
@@ -105,5 +109,75 @@ See Rotstock et al. 2014 for similar resolution of paradox
 
 \bibliographystyle{plainnat}
 \bibliography{Mendeley}
+
+\newpage
+
+\section*{Figure 1}
+
+\begin{figure}[ht]\centering
+\includegraphics[width=\linewidth]{fig/niche.pdf}
+\caption{Commensal symbionts, all same niche width}
+\label{fig:fig/fig1}
+\end{figure}
+
+\newpage
+
+\section*{Figure 1}
+
+\begin{figure}[ht]\centering
+\includegraphics[width=\linewidth]{fig/fig1.pdf}
+\caption{Commensal symbionts, all same niche width}
+\label{fig:fig/fig1}
+\end{figure}
+
+\newpage
+
+\section*{Figure 2}
+
+\begin{figure}[ht]\centering
+\includegraphics[width=\linewidth]{fig/fig2.pdf}
+\caption{Varying niche width, but constant within symbiont community}
+\label{fig:fig2}
+\end{figure}
+
+\newpage
+
+\section*{Figure 3}
+
+\begin{figure}[ht]\centering
+\includegraphics[width=\linewidth]{fig/fig3.pdf}
+\caption{Varying fitness consequences, but constant within symbiont community}
+\label{fig:fig3}
+\end{figure}
+
+\newpage
+
+\section*{Figure 4}
+
+\begin{figure}[ht]\centering
+\includegraphics[width=\linewidth]{fig/fig4.pdf}
+\caption{Mixed niche breadths within symbiont community}
+\label{fig:fig4}
+\end{figure}
+
+\newpage
+
+\section*{Figure 5}
+
+\begin{figure}[ht]\centering,
+\includegraphics[width=\linewidth]{fig/fig5.pdf}
+\caption{Mixed fitness consequences within symbiont community}
+\label{fig:fig5}
+\end{figure}
+
+\newpage
+
+\section*{Figure 6}
+
+\begin{figure}[ht]\centering,
+\includegraphics[width=\linewidth]{fig/fig6.pdf}
+\caption{Mixed niche breadths and fitness consequences}
+\label{fig:fig6}
+\end{figure}
 
 \end{document}
