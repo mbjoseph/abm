@@ -11,7 +11,7 @@ registerDoMC(2)
 dir <- paste(getwd(), "/R/5-mixedfitness/sim_results", sep="")
 data <- list.files(dir, pattern="res*")
 iter <- length(data)
-beta_max <- 10
+beta_max <- .99
 beta_min <- -.99
 nS <- 50
 
@@ -32,6 +32,7 @@ if (iter < 1000) {
 if (!("res.Rdata" %in% list.files(paste(getwd(), "/R/5-mixedfitness/", sep="")))) {
   rich_ts <- list()
   srich_ts <- list()
+  sbeta_ts <- list()
   ts <- list()
   h_condition <- list()
   eff_diversity <- list()
@@ -62,6 +63,9 @@ if (!("res.Rdata" %in% list.files(paste(getwd(), "/R/5-mixedfitness/", sep="")))
     # calculate colonization & transmission rates for each symbiont species
     trans_each[, i] <- apply(d$s.ind, 2, FUN=function(x) sum(diff(x) == 1) / max(d$t))
     beta_s[, i] <- d$pars$beta_d
+    pres <- d$s.ind > 0
+    beta_ab <- apply(pres, 1, function(x) x * d$pars$beta_d)
+    sbeta_ts[[i]] <- apply(beta_ab, 2, function(x) mean(x[x != 0])) # only works when no beta == 0
     rm(d)
   }
   save(list=ls(), file=paste(getwd(), "/R/5-mixedfitness/res.Rdata", sep=""))
@@ -70,8 +74,6 @@ if (!("res.Rdata" %in% list.files(paste(getwd(), "/R/5-mixedfitness/", sep="")))
 }
 
 mdiv <- melt(eff_diversity)
-
-
 mts <- melt(rich_ts)
 names(mts) <- c('host_richness', 'iteration')
 mts$t <- melt(ts) %>%
@@ -81,8 +83,12 @@ mts$symbiont_richness <- melt(srich_ts) %>%
   select(value) %>%
   unlist()
 mts$functional_diversity <- mdiv$value
-
 mts <- tbl_df(mts)
+
+beta_ts <- lapply(sbeta_ts, mean, na.rm=TRUE)
+str(unlist(beta_ts))
+beta_df <- data.frame(iteration = 1:iter, 
+                       mean_beta = unlist(beta_ts))
 
 ggplot(sub_unique(mts, 'host_richness'), 
        aes(x=t, y=host_richness, group=iteration)) + 
@@ -108,9 +114,11 @@ sum_d <- mts %>%
             dmean = mean(functional_diversity),
             dsd = sd(functional_diversity),
             cor_div = cor(host_richness, symbiont_richness),
-            beta_range = range()
+#            beta_range = range(),
             n=n())
 sum_d$trans <- trans[match(sum_d$iteration, 1:length(trans))]
+sum_d <- full_join(sum_d, beta_df)
+
 bs <- melt(beta_s)
 names(bs) <- c('symbiont', 'iteration', 'beta_d')
 
@@ -119,8 +127,6 @@ sum_beta <- bs %>%
   summarize(beta_range = max(beta_d) - min(beta_d))
 
 sum_d <- full_join(sum_d, sum_beta)
-
-
 mtrans <- melt(trans_each)
 names(mtrans) <- c('symbiont', 'iteration', 'trans')
 jt <- full_join(bs, mtrans)
@@ -133,28 +139,31 @@ ggplot(jt, aes(x=dmean, y=trans, color=beta_d)) +
   ylab('Symbiont transmission & colonization') + 
   scale_color_gradientn(colours=rainbow(3))
 
-
 library(gtools)
 jt$beta_bin <- quantcut(jt$beta_d, q=6)
 alph <- .5
-p1 <- ggplot(sum_d, aes(x=dmean, y=smean)) + 
+p1 <- ggplot(sum_d, aes(x=dmean, y=smean, color=mean_beta)) + 
   geom_point(alpha=alph) + 
   xlab('Host functional diversity') + 
-  ylab('Symbiont richness')
+  ylab('Symbiont richness') + 
+  scale_color_gradient2(low='blue', mid='green', high='red',
+                        guide = guide_legend(title = 'Mean \neffect on \ndeath rate'))
 p1
 
+jt$`Fitness effect` <- jt$beta_bin
 p2 <- ggplot(jt, aes(x=dmean, y=trans)) + 
-  geom_point(alpha=.2) +
+  geom_point(alpha=.4, shape=1) +
   xlab('Host functional diversity') + 
   ylab('Symbiont transmission & colonization') + 
-  facet_wrap(~beta_bin)
+  facet_wrap(~ `Fitness effect`, labeller = label_both) +
+  theme(strip.text = element_text(size=7))
 p2
 
 ggplot(sum_d, aes(x=dmean, y=cor_div)) + 
   geom_point(alpha=alph) + 
   xlab('Functional diversity') + 
   ylab('Correlation: host and symbiont richness') + 
-  geom_abline(yintercept=0, slope=0, linetype='dashed')
+  geom_abline(intercept=0, slope=0, linetype='dashed')
 
 library(gridExtra)
 library(grid)
@@ -168,6 +177,6 @@ myplot2 <- arrangeGrob(p2, top = textGrob("B",
                                           x = unit(xj, "npc"), 
                                           y = unit(yj, "npc"), 
                                           just = c("left","top")))
-grid.arrange(myplot1, myplot2, ncol=2, widths=c(1, 1.5))
-dev.copy2pdf(file="paper/fig/fig5.pdf", width = 8, height = 4)
+grid.arrange(myplot1, myplot2, ncol=1, heights = c(.7, 1))
+dev.copy2pdf(file="paper/fig/fig5.pdf", width = 5, height = 7.5)
 

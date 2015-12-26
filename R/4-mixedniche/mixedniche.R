@@ -67,7 +67,8 @@ if (!("res.Rdata" %in% list.files(paste(getwd(), "/R/4-mixedniche/", sep="")))) 
     sigma_s[, i] <- d$pars$sig.s
     # calculate mean niche breadth at each timestep
     # weighted version
-    niche_ab <- apply(d$s.ind, 1, function(x) x * d$pars$sig.s)
+    # species by iteration matrix for niche breadth weighted by abundance
+    niche_ab <- apply(d$s.ind, 1, function(x) ifelse(x > 0, 1, 0) * d$pars$sig.s)
     sbreadth_ts[[i]] <- apply(niche_ab, 2, function(x) mean(x[x > 0]))
     rm(d)
   }
@@ -87,6 +88,11 @@ mts$symbiont_richness <- melt(srich_ts) %>%
   select(value) %>%
   unlist()
 mts$functional_diversity <- mdiv$value
+
+niche_ts <- lapply(sbreadth_ts, mean, na.rm=TRUE)
+str(unlist(niche_ts))
+niche_df <- data.frame(iteration = 1:iter, 
+                       mean_breadth = unlist(niche_ts))
 
 mts <- tbl_df(mts)
 
@@ -115,6 +121,7 @@ sum_d <- mts %>%
             dsd = sd(functional_diversity),
             cor_div = cor(host_richness, symbiont_richness),
             n=n())
+sum_d <- left_join(sum_d, niche_df)
 sum_d$trans <- trans[match(sum_d$iteration, 1:length(trans))]
 ss <- melt(sigma_s)
 names(ss) <- c('symbiont', 'iteration', 'niche_width')
@@ -124,25 +131,34 @@ jt <- full_join(ss, mtrans)
 jt$dmean <- sum_d$dmean[match(jt$iteration, sum_d$iteration)]
 jt$smean <- sum_d$smean[match(jt$iteration, sum_d$iteration)]
 
-
-
-
 ggplot(jt, aes(x=dmean, y=trans, color=niche_width)) + 
   geom_point(alpha=.5) +
   xlab('Functional diversity') + 
   ylab('Symbiont transmission & colonization') + 
   scale_color_gradientn(colours=rainbow(3))
 
-
 library(gtools)
 jt$sigma_bin <- quantcut(jt$niche_width, q=6)
-alph <- .5
+alph <- .6
 
-p1 <- ggplot(sum_d, aes(x=dmean, y=smean)) + 
+ggplot(sum_d, aes(x=dmean, y=smean)) + 
   geom_point(alpha=alph) + 
   xlab('Host functional diversity') + 
   ylab('Symbiont richness')
-p1
+
+p1 <- ggplot(sum_d, aes(x=dmean, y=smean, color=mean_breadth)) + 
+  geom_point(alpha=alph) + 
+  xlab('Host functional diversity') + 
+  ylab('Symbiont richness') + 
+  scale_color_gradient2(midpoint = 20, low='red', mid='green', high='blue',
+                        guide = guide_legend(title = 'Mean \nniche \nbreath'))
+p1 
+
+ggplot(sum_d, aes(x=dmean, y=mean_breadth)) + 
+  geom_point(alpha=alph) + 
+  xlab('Host functional diversity') + 
+  ylab('Symbiont niche breadth') + 
+  stat_smooth()
 
 ggplot(jt, aes(x=dmean, y=smean)) + 
   geom_point(alpha=alph) + 
@@ -150,11 +166,14 @@ ggplot(jt, aes(x=dmean, y=smean)) +
   ylab('Symbiont richness') + 
   facet_wrap(~sigma_bin)
 
+jt$`Niche breadth` <- jt$sigma_bin
 p2 <- ggplot(jt, aes(x=dmean, y=trans)) + 
-  geom_point(alpha=.2) +
+  geom_point(alpha=.4, shape = 1) +
   xlab('Host functional diversity') + 
   ylab('Symbiont transmission & colonization') + 
-  facet_wrap(~sigma_bin)
+  facet_wrap(~ `Niche breadth`, labeller = label_both) + 
+  theme(strip.text = element_text(size=7))
+p2
 
 ggplot(sum_d, aes(x=dmean, y=cor_div)) + 
   geom_point(alpha=alph) + 
@@ -175,6 +194,6 @@ myplot2 <- arrangeGrob(p2, top = textGrob("B",
                                           x = unit(xj, "npc"), 
                                           y = unit(yj, "npc"), 
                                           just = c("left","top")))
-grid.arrange(myplot1, myplot2, ncol=2, widths=c(1, 1.5))
-dev.copy2pdf(file="paper/fig/fig4.pdf", width = 8, height = 4)
+grid.arrange(myplot1, myplot2, ncol=1, heights = c(.7, 1))
+dev.copy2pdf(file="paper/fig/fig4.pdf", width = 5, height = 7.5)
 

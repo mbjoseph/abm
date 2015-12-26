@@ -45,6 +45,8 @@ if (!("res.Rdata" %in% list.files(paste(getwd(), "/R/6-mixedup/", sep="")))) {
   trans_each <- array(dim=c(nS, iter))
   beta_s <- array(dim=c(nS, iter))
   sigma_s <- array(dim=c(nS, iter))
+  sbreadth_ts <- list()
+  sbeta_ts <- list()
   
   pb <- txtProgressBar(max=iter)
   for (i in 1:iter){
@@ -75,6 +77,11 @@ if (!("res.Rdata" %in% list.files(paste(getwd(), "/R/6-mixedup/", sep="")))) {
     trans_each[, i] <- apply(d$s.ind, 2, FUN=function(x) sum(diff(x) == 1) / max(d$t))
     sigma_s[, i] <- d$pars$sig.s
     beta_s[, i] <- d$pars$beta_d
+    niche_ab <- apply(d$s.ind, 1, function(x) ifelse(x > 0, 1, 0) * d$pars$sig.s)
+    sbreadth_ts[[i]] <- apply(niche_ab, 2, function(x) mean(x[x > 0]))
+    pres <- d$s.ind > 0
+    beta_ab <- apply(pres, 1, function(x) x * d$pars$beta_d)
+    sbeta_ts[[i]] <- apply(beta_ab, 2, function(x) mean(x[x != 0])) # only works when no beta == 0
     rm(d)
     setTxtProgressBar(pb, i)
   }
@@ -102,6 +109,15 @@ mts$mutualist_richness <- melt(mutua_rich) %>%
 mts$functional_diversity <- mdiv$value
 
 mts <- tbl_df(mts)
+
+niche_ts <- lapply(sbreadth_ts, mean, na.rm=TRUE)
+str(unlist(niche_ts))
+niche_df <- data.frame(iteration = 1:iter, 
+                       mean_breadth = unlist(niche_ts))
+beta_ts <- lapply(sbeta_ts, mean, na.rm=TRUE)
+str(unlist(beta_ts))
+beta_df <- data.frame(iteration = 1:iter, 
+                      mean_beta = unlist(beta_ts))
 
 ggplot(sub_unique(mts, 'host_richness'), 
        aes(x=t, y=host_richness, group=iteration)) + 
@@ -170,6 +186,8 @@ bs <- melt(beta_s)
 names(bs) <- c('symbiont', 'iteration', 'beta_d')
 mtrans <- melt(trans_each)
 names(mtrans) <- c('symbiont', 'iteration', 'trans')
+sum_d <- full_join(sum_d, niche_df)
+sum_d <- full_join(sum_d, beta_df)
 
 ss <- melt(sigma_s)
 names(ss) <- c('symbiont', 'iteration', 'niche_width')
@@ -199,18 +217,32 @@ p1 <- ggplot(sum_d, aes(x=dmean, y=smean)) +
   ylab('Symbiont richness')
 p1
 
+p2 <- ggplot(sum_d, aes(x=dmean, y=mean_beta)) + 
+  geom_point(alpha=.6) + 
+  xlab('Host functional diversity') + 
+  ylab('Mean effect on mortality')
+p2 
+
+p3 <- ggplot(sum_d, aes(x=dmean, y=mean_breadth)) + 
+  geom_point(alpha=.6) + 
+  xlab('Host functional diversity') + 
+  ylab('Mean niche breadth')
+p3
+
 ggplot(jt, aes(x=dmean, y=trans)) + 
   geom_point(alpha=.2) +
   xlab('Functional diversity') + 
   ylab('Symbiont transmission & colonization') + 
   facet_grid(sigma_bin~beta_bin)
 
-p2 <- ggplot(jt, aes(x=dmean, y=trans)) + 
+jt$Type <- jt$paras
+jt$`Niche breadlabeller = label_bothth` <- jt$sigma_bin
+p4 <- ggplot(jt, aes(x=dmean, y=trans)) + 
   geom_point(alpha=.2) +
   xlab('Host functional diversity') + 
   ylab('Symbiont transmission & colonization') + 
-  facet_grid(paras ~ sigma_bin)
-p2
+  facet_grid(Type ~ `Niche breadth`, labeller = label_both)
+p4
 
 ggplot(sum_d, aes(x=dmean, y=cor_div)) + 
   geom_point(alpha=alph) + 
@@ -231,5 +263,14 @@ myplot2 <- arrangeGrob(p2, top = textGrob("B",
                                           x = unit(xj, "npc"), 
                                           y = unit(yj, "npc"), 
                                           just = c("left","top")))
-grid.arrange(myplot1, myplot2, ncol=2, widths=c(1, 1.5))
-dev.copy2pdf(file="paper/fig/fig6.pdf", width = 8, height = 4)
+myplot3 <- arrangeGrob(p3, top = textGrob("C", 
+                                          x = unit(xj, "npc"), 
+                                          y = unit(yj, "npc"), 
+                                          just = c("left","top")))
+myplot4 <- arrangeGrob(p4, top = textGrob("D", 
+                                          x = unit(xj, "npc"), 
+                                          y = unit(yj, "npc"), 
+                                          just = c("left","top")))
+row1 <- arrangeGrob(myplot1, myplot2, myplot3, nrow=1)
+grid.arrange(row1, myplot4, ncol=1, heights=c(1, 1.8))
+dev.copy2pdf(file="paper/fig/fig6.pdf", width = 10, height = 6)
