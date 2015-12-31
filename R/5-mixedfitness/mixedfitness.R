@@ -148,17 +148,18 @@ p1 <- ggplot(sum_d, aes(x=dmean, y=smean, color=mean_beta)) +
   geom_point(alpha=alph) + 
   xlab('Host functional diversity') + 
   ylab('Symbiont richness') + 
-  scale_color_gradient2(low='blue', mid='green', high='red',
-                        guide = guide_legend(title = 'Mean \neffect on \ndeath rate'))
+  scale_color_gradient2(low='blue', mid='green', high='red', 
+                        name = 'Mean effect\non death rate') + 
+  theme(legend.position = 'bottom')
 p1
 
-jt$`Fitness effect` <- jt$beta_bin
+jt$`Death rate effect` <- jt$beta_bin
 p2 <- ggplot(jt, aes(x=dmean, y=trans)) + 
   theme_tufte() + 
   geom_point(alpha=.4, shape=1) +
   xlab('Host functional diversity') + 
-  ylab('Symbiont transmission & colonization') + 
-  facet_wrap(~ `Fitness effect`, labeller = label_both) +
+  ylab('Symbiont transmission') + 
+  facet_wrap(~ `Death rate effect`, labeller = label_both) +
   theme(strip.text = element_text(size=7))
 p2
 
@@ -180,6 +181,6 @@ myplot2 <- arrangeGrob(p2, top = textGrob("B",
                                           x = unit(xj, "npc"), 
                                           y = unit(yj, "npc"), 
                                           just = c("left","top")))
-grid.arrange(myplot1, myplot2, ncol=1, heights = c(.7, 1))
-dev.copy2pdf(file="paper/fig/fig5.pdf", width = 5, height = 7.5)
+grid.arrange(myplot1, myplot2, ncol=2, widths = c(.7, 1))
+dev.copy2pdf(file="paper/fig/fig5.pdf", height = 4, width = 8)
 

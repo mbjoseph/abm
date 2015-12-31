@@ -154,7 +154,8 @@ p1 <- ggplot(sum_d, aes(x=dmean, y=smean, color=mean_breadth)) +
   xlab('Host functional diversity') + 
   ylab('Symbiont richness') + 
   scale_color_gradient2(midpoint = 20, low='red', mid='green', high='blue',
-                        guide = guide_legend(title = 'Mean \nniche \nbreath'))
+                        name = 'Mean niche breath') + 
+  theme(legend.position='bottom')
 p1 
 
 ggplot(sum_d, aes(x=dmean, y=mean_breadth)) + 
@@ -174,7 +175,7 @@ p2 <- ggplot(jt, aes(x=dmean, y=trans)) +
   theme_tufte() + 
   geom_point(alpha=.4, shape = 1) +
   xlab('Host functional diversity') + 
-  ylab('Symbiont transmission & colonization') + 
+  ylab('Symbiont transmission') + 
   facet_wrap(~ `Niche breadth`, labeller = label_both) + 
   theme(strip.text = element_text(size=7))
 p2
@@ -198,6 +199,6 @@ myplot2 <- arrangeGrob(p2, top = textGrob("B",
                                           x = unit(xj, "npc"), 
                                           y = unit(yj, "npc"), 
                                           just = c("left","top")))
-grid.arrange(myplot1, myplot2, ncol=1, heights = c(.7, 1))
-dev.copy2pdf(file="paper/fig/fig4.pdf", width = 5, height = 7.5)
+grid.arrange(myplot1, myplot2, ncol=2, widths = c(.7, 1))
+dev.copy2pdf(file="paper/fig/fig4.pdf", height = 4, width = 7.5)
 
