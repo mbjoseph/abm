@@ -95,48 +95,62 @@ In our third experiment where the fitness consequences of infection varied among
 This is likely because parasites restrict their own transmission by killing hosts, making it more difficult to persist in a local host community. 
 As a result, richer host communities still can be colonized by more parasitic symbiont species, but these communities will have more depauperate symbiont communities relative to communities comprised of less virulent symbionts. 
 
-\subsection*{Varying niche width within communities}
-
-When symbiont niche width varied within communities, host diversity still increased symbiont richness, but the effects of host diversity on symbiont transmission were more subtle. 
+When symbiont niche width varied within communities, host diversity still increased symbiont richness, but the effects of host diversity on symbiont transmission were more subtle (Figure \ref{f5}). 
 Specialist symbionts had the highest transmission rates in low-diversity communities, but had relatively low transmission in more diverse host communities. 
 Generalist symbionts actually had higher transmission in the high diversity host communities, and lower transmission in less diverse host communities, consistent with the idea that specialist symbionts can outcompete generalists. 
 In addition, mean niche breadth in the symbiont community increased with host functional diversity, such that diverse host communities contained more generalist symbionts than low diversity host communities. 
 
-\subsection*{Varying fitness consequences within communities}
-
-When symbionts varied in fitness effects, host diversity increased symbiont richness, and reduced transmission, but the reduction in transmission was more pronounced for parasitic than mutualistic symbionts. 
+When symbionts varied in fitness effects, host diversity increased symbiont richness, and reduced transmission, but the reduction in transmission was more pronounced for parasitic than mutualistic symbionts (Figure \ref{f6}). 
 Interestingly, extremely mutualistic symbionts had a lower peak transmission in low diversity communities than moderately mutualistic symbionts, because host were so long-lived that the majority habitat patches in the lowest diversity communities were occupied by extremely long-lived, infected hosts, such that there were fewer susceptible hosts available for transmission. 
 There were no clear patterns with the mean fitness effect as a response to host functional diversity. 
 
-\subsection*{Varying niche width and fitness consequences within communities}
-
-Host diversity increased symbiont diversity, but the effect was non-linear (Figure 4). 
-Furthermore, although we did observe a similar 2nd degree polynomial type of relationship, we did not observe a unimodal relationship between host and symbiont diversity across any range of parameter values. 
-
-As expected, when symbionts reduced host longevity, persistence within the host community becomes less probable for each symbiont species, resulting in a reduction in mean symbiont richness. 
-Symbionts that increased host longevity showed the reverse pattern: persistence becomes more likely when symbionts are mutualists, resulting in higher mean symbiont richness (Figure 5). 
+When symbionts varied in fitness effects and niche breadth, host diversity still increased symbiont diversity and reduced transmission (Figure \ref{f7}). 
+Mutualistic symbionts nearly always had higher transmission than parasitic symbionts, and on average, symbionts in the local communities were mutualistic. 
+Furthermore, low diversity host communities had more specialist symbionts than high diversity communities, which primarily consisted of generalists. 
+Both of these findings are consistent with the component cases when fitness effects and niche breadth are the only varying parameters.
 
 \section*{Discussion}
 
-Static host communities 
-- extension of free living species concept, but not so applicable
-- observed unimodal relationship
+Across a wide range of situations, host functional diversity consistently increased symbiont diversity and reduced transmission in our model. 
+Fitness consequences of infection and symbiont niche breadth regulated the degree and to a lesser extent the shape of these relationships.
+In general, we expect that across replicated communities in nature, that all else being equal, host communities that are low in functional diversity will have relatively low symbiont richness but high transmission, and that specialist symbionts may be more likely to occur in high abundance. 
+In contrast, host communities that are incredibly diverse are more likely to have diverse symbiont communities with lower mean transmission rates, and also more generalist symbionts. 
+
+Connections to existing theory
+\begin{itemize}
+	\item Dobson and our paper
+	\item Allouche
+\end{itemize}
+
+Connections to empirical results
+\begin{itemize}
+	\item See Dunn et al. 2010 for non-linear relationship
+	\item See Rotstock et al. 2014 for similar resolution of paradox
+\end{itemize}
+
+Shortcomings of this approach
+\begin{itemize}
+	\item Many parameters
+    \item Constraints on model realism
+    \item Hard to validate
+\end{itemize}
+
+Future directions
+\begin{itemize}
+	\item Experimental validation on simple hosts
+    \item Evaluation at multiple scales (metacommunity)
+\end{itemize}
 
 Dynamic host communities
-- more realistic
 - difference between potential vs. realized host richness
 - not as strong unimodal relationships observed, because it's very unlikely to have tons of very small, very different host populations (small populations face a higher risk of stochastic extinctions)
 
-See Dunn et al. 2010 for non-linear relationship
 
-See Rotstock et al. 2014 for similar resolution of paradox
 
 \bibliographystyle{plainnat}
 \bibliography{Mendeley}
 
 \newpage
-
-\section*{Figure 1}
 
 \begin{figure}[ht]\centering
 \includegraphics[width=\linewidth]{fig/niche.pdf}
@@ -146,8 +160,6 @@ See Rotstock et al. 2014 for similar resolution of paradox
 
 \newpage
 
-\section*{Figure 2}
-
 \begin{figure}[ht]\centering
 \includegraphics[width=\linewidth]{fig/fig1.pdf}
 \caption{Commensal symbionts, all same niche width}
@@ -155,8 +167,6 @@ See Rotstock et al. 2014 for similar resolution of paradox
 \end{figure}
 
 \newpage
-
-\section*{Figure 3}
 
 \begin{figure}[ht]\centering
 \includegraphics[width=\linewidth]{fig/fig2.pdf}
@@ -166,8 +176,6 @@ See Rotstock et al. 2014 for similar resolution of paradox
 
 \newpage
 
-\section*{Figure 4}
-
 \begin{figure}[ht]\centering
 \includegraphics[width=\linewidth]{fig/fig3.pdf}
 \caption{Varying fitness consequences, but constant within symbiont community}
@@ -176,51 +184,32 @@ See Rotstock et al. 2014 for similar resolution of paradox
 
 \newpage
 
-\section*{Figure 5}
-
-\begin{figure}[ht]\centering
-\includegraphics[width=\linewidth]{fig/fig4.pdf}
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth,height=\dimexpr\textheight-4\baselineskip-\abovecaptionskip-\belowcaptionskip\relax,
+keepaspectratio]{fig/fig4.pdf}
 \caption{Mixed niche breadths within symbiont community}
 \label{f5}
 \end{figure}
 
 \newpage
 
-\section*{Figure 6}
-
 \begin{figure}[ht]\centering,
-\includegraphics[width=\linewidth]{fig/fig5.pdf}
+\includegraphics[width=\textwidth,height=\dimexpr\textheight-4\baselineskip-\abovecaptionskip-\belowcaptionskip\relax,
+keepaspectratio]{fig/fig5.pdf}
 \caption{Mixed fitness consequences within symbiont community}
 \label{f6}
 \end{figure}
 
 \newpage
 
-\section*{Figure 7}
-
 \begin{figure}[ht]\centering,
-\includegraphics[width=\linewidth]{fig/fig6.pdf}
+\includegraphics[width=\textwidth,height=\dimexpr\textheight-4\baselineskip-\abovecaptionskip-\belowcaptionskip\relax,
+keepaspectratio]{fig/fig6.pdf}
 \caption{Mixed niche breadths and fitness consequences}
 \label{f7}
 \end{figure}
 
 \newpage
-
-\section*{Supplemental material}
-
-\subsection*{Detailed simulation algorithm description}
-
-Symbionts can be parasitic, commensal, or mutualistic through their effects on host survival.
-To ensure that we can investigate a range of conditions, we modify the host survival rate $r$ as a function of infection:
-
-$$r = d(1 + \beta_d * I(infected))$$
-
-where $d$ is the background death rate, and $I(infected)$ is an indicator function that returns $1$ if an individual host is infected. 
-The parameter $\beta_d$ controls the effect of infection on survival. 
-When $\beta_d = 0$, the symbiont has no effect on survival, positive values impose increases in the death rate, and values in the interval $(-1, 0]$ represent decreases in death rate. 
-
-
-
-\subsection*{Choice of parameter values}
 
 \end{document}
