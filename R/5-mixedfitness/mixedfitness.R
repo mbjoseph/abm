@@ -140,9 +140,11 @@ ggplot(jt, aes(x=dmean, y=trans, color=beta_d)) +
   scale_color_gradientn(colours=rainbow(3))
 
 library(gtools)
+library(ggthemes)
 jt$beta_bin <- quantcut(jt$beta_d, q=6)
 alph <- .5
 p1 <- ggplot(sum_d, aes(x=dmean, y=smean, color=mean_beta)) + 
+  theme_tufte() + 
   geom_point(alpha=alph) + 
   xlab('Host functional diversity') + 
   ylab('Symbiont richness') + 
@@ -152,6 +154,7 @@ p1
 
 jt$`Fitness effect` <- jt$beta_bin
 p2 <- ggplot(jt, aes(x=dmean, y=trans)) + 
+  theme_tufte() + 
   geom_point(alpha=.4, shape=1) +
   xlab('Host functional diversity') + 
   ylab('Symbiont transmission & colonization') + 

@@ -96,13 +96,13 @@ niche_df <- data.frame(iteration = 1:iter,
 
 mts <- tbl_df(mts)
 
-ggplot(sub_unique(mts, 'host_richness'), 
-       aes(x=t, y=host_richness, group=iteration)) + 
-  geom_line(alpha=.5)
+#ggplot(sub_unique(mts, 'host_richness'), 
+#       aes(x=t, y=host_richness, group=iteration)) + 
+#  geom_line(alpha=.5)
 
-ggplot(sub_unique(mts, 'symbiont_richness'), 
-       aes(x=t, y=symbiont_richness, group=iteration)) + 
-  geom_line(alpha=.5)
+#ggplot(sub_unique(mts, 'symbiont_richness'), 
+#       aes(x=t, y=symbiont_richness, group=iteration)) + 
+#  geom_line(alpha=.5)
 
 up_lim <- 600
 low_lim <- 400
@@ -146,7 +146,10 @@ ggplot(sum_d, aes(x=dmean, y=smean)) +
   xlab('Host functional diversity') + 
   ylab('Symbiont richness')
 
+library(ggthemes)
+
 p1 <- ggplot(sum_d, aes(x=dmean, y=smean, color=mean_breadth)) + 
+  theme_tufte() + 
   geom_point(alpha=alph) + 
   xlab('Host functional diversity') + 
   ylab('Symbiont richness') + 
@@ -168,6 +171,7 @@ ggplot(jt, aes(x=dmean, y=smean)) +
 
 jt$`Niche breadth` <- jt$sigma_bin
 p2 <- ggplot(jt, aes(x=dmean, y=trans)) + 
+  theme_tufte() + 
   geom_point(alpha=.4, shape = 1) +
   xlab('Host functional diversity') + 
   ylab('Symbiont transmission & colonization') + 

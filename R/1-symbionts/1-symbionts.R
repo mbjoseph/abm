@@ -112,20 +112,25 @@ sum_d <- mts %>%
             n=n())
 sum_d$trans <- trans[match(sum_d$iteration, 1:length(trans))]
 alph <- .5
+
+library(ggthemes)
+
 p1 <- ggplot(sum_d, aes(x=dmean, y=smean)) + 
-  geom_point(alpha=alph) + 
+  geom_point(alpha=alph, shape = 1) + 
   #geom_segment(aes(x=dmean, xend=dmean, y=smean - ssd, yend = smean + ssd), 
   #             alpha=alph) +
   #geom_segment(aes(x=dmean - dsd, xend=dmean + dsd, y=smean, yend=smean), 
   #             alpha=alph) +
   xlab('Host functional diversity') + 
-  ylab('Symbiont richness')
+  ylab('Symbiont richness') + 
+  theme_tufte()
 p1 
 
 p2 <- ggplot(sum_d, aes(x=dmean, y=trans)) + 
-  geom_point(alpha=alph) + 
+  geom_point(alpha=alph, shape = 1) + 
   xlab('Host functional diversity') + 
-  ylab('Transmission rate')
+  ylab('Transmission rate') + 
+  theme_tufte()
 p2
 
 ggplot(sum_d, aes(x=smean, y=trans)) + 
@@ -141,7 +146,7 @@ ggplot(sum_d, aes(x=dmean, y=cor_div)) +
 
 
 library(gridExtra)
-librar
+library(grid)
 xj <- .1
 yj <- .6
 
@@ -150,10 +155,6 @@ myplot1 <- arrangeGrob(p1, top = textGrob("A",
                                                y = unit(yj, "npc"), 
                                                just = c("left","top")))
 myplot2 <- arrangeGrob(p2, top = textGrob("B", 
-                                          x = unit(xj, "npc"), 
-                                          y = unit(yj, "npc"), 
-                                          just = c("left","top")))
-myplot3 <- arrangeGrob(p3, top = textGrob("C", 
                                           x = unit(xj, "npc"), 
                                           y = unit(yj, "npc"), 
                                           just = c("left","top")))

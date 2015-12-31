@@ -80,13 +80,13 @@ mts$functional_diversity <- mdiv$value
 
 mts <- tbl_df(mts)
 
-ggplot(sub_unique(mts, 'host_richness'), 
-       aes(x=t, y=host_richness, group=iteration)) + 
-  geom_line(alpha=.5)
+#ggplot(sub_unique(mts, 'host_richness'), 
+#       aes(x=t, y=host_richness, group=iteration)) + 
+#  geom_line(alpha=.5)
 
-ggplot(sub_unique(mts, 'symbiont_richness'), 
-       aes(x=t, y=symbiont_richness, group=iteration)) + 
-  geom_line(alpha=.5)
+#ggplot(sub_unique(mts, 'symbiont_richness'), 
+#       aes(x=t, y=symbiont_richness, group=iteration)) + 
+#  geom_line(alpha=.5)
 
 up_lim <- 600
 low_lim <- 400
@@ -131,27 +131,27 @@ ggplot(sum_d, aes(x=dmean, y=smean)) +
   facet_wrap(~sigma_bin) + 
   stat_smooth()
 
+library(ggthemes)
+sum_d$`Niche breadth` <- sum_d$sigma_bin
 p1 <- ggplot(sum_d, aes(x=dmean, y=smean, color=sigma_s)) + 
   geom_point(alpha=.9) + 
-#  geom_segment(aes(x=dmean, xend=dmean, y=smean - ssd, yend = smean + ssd), 
-#               alpha=alph) +
-#  geom_segment(aes(x=dmean - dsd, xend=dmean + dsd, y=smean, yend=smean), 
-#               alpha=alph) +
+  theme_tufte() + 
   xlab('Host functional diversity') + 
   ylab('Symbiont richness') + 
-  facet_wrap(~sigma_bin) + 
-  stat_smooth(method=lm, formula=y ~ x + I(x^2)) + 
+  facet_wrap(~`Niche breadth`, labeller = label_both) + 
+  stat_smooth(method=lm, formula=y ~ x + I(x^2), color = 'black') + 
   scale_color_gradientn(colours=rainbow(3)) + 
   theme(legend.position="none")
 p1
 
 p2 <- ggplot(sum_d, aes(x=dmean, y=trans, color=sigma_s)) + 
   geom_point(alpha=1) + 
+  theme_tufte() + 
   xlab('Host functional diversity') + 
   ylab('Symbiont transmission rate') + 
   scale_color_gradientn(colours=rainbow(3)) + 
-  facet_wrap(~sigma_bin, scales = 'free') + 
-  stat_smooth(method=lm, formula=y ~ x) + 
+  facet_wrap(~`Niche breadth`, labeller = label_both, scales='free') + 
+  stat_smooth(method=lm, formula=y ~ x, color = 'black') + 
   theme(legend.position="none")
 p2
 
@@ -162,10 +162,11 @@ ggplot(sum_d, aes(x=smean, y=trans, color=sigma_s)) +
   scale_color_gradientn(colours=rainbow(3))
 
 p3 <- ggplot(sum_d, aes(x=dmean, y=cor_div, color=sigma_s)) + 
+  theme_tufte() + 
   geom_point(alpha=.8) + 
   xlab('Host functional diversity') + 
   ylab('Correlation: host and symbiont richness') + 
-  geom_abline(yintercept=0, slope=0, linetype='dashed') + 
+  geom_abline(intercept=0, slope=0, linetype='dashed') + 
   scale_color_gradientn(name="Symbiont\nniche\nwidth", colours=rainbow(3))
 p3
 

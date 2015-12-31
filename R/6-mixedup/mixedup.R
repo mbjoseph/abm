@@ -119,23 +119,23 @@ str(unlist(beta_ts))
 beta_df <- data.frame(iteration = 1:iter, 
                       mean_beta = unlist(beta_ts))
 
-ggplot(sub_unique(mts, 'host_richness'), 
-       aes(x=t, y=host_richness, group=iteration)) + 
-  geom_line(alpha=.01)
+#ggplot(sub_unique(mts, 'host_richness'), 
+#       aes(x=t, y=host_richness, group=iteration)) + 
+#  geom_line(alpha=.01)
 
-ggplot(sub_unique(mts, 'symbiont_richness'), 
-       aes(x=t, y=symbiont_richness, group=iteration)) + 
-  geom_line(alpha=.05) + 
+#ggplot(sub_unique(mts, 'symbiont_richness'), 
+#       aes(x=t, y=symbiont_richness, group=iteration)) + 
+#  geom_line(alpha=.05) + 
   #geom_vline(xintercept=200) + 
   #stat_smooth(alpha=.1, se=FALSE, fill='blue', size=.1) + 
-  ylim(0, 22) + xlim(0, 1000)
+#  ylim(0, 22) + xlim(0, 1000)
 
-ggplot(sub_unique(mts, 'symbiont_richness'), 
-       aes(x=t, y=parasite_richness, group=iteration)) + 
-  geom_line(alpha=.1) + 
+#ggplot(sub_unique(mts, 'symbiont_richness'), 
+#       aes(x=t, y=parasite_richness, group=iteration)) + 
+#  geom_line(alpha=.1) + 
   #geom_vline(xintercept=200) + 
   #stat_smooth(alpha=.1, se=FALSE, fill='blue', size=.1) + 
-  ylim(0, 22) + xlim(0, 1000)
+#  ylim(0, 22) + xlim(0, 1000)
 
 ggplot(sub_unique(mts, 'symbiont_richness'), 
        aes(x=t, y=mutualist_richness, group=iteration)) + 
@@ -210,23 +210,29 @@ alph <- .3
 
 # split into parasites and mutualists
 jt$paras <- ifelse(jt$beta_d < 0, 'Mutualist', 'Parasite')
-
+library(ggthemes)
 p1 <- ggplot(sum_d, aes(x=dmean, y=smean)) + 
-  geom_point(alpha=.6) + 
+  theme_tufte() + 
+  geom_point(alpha=.3, shape = 1) + 
+  stat_smooth(method=lm, formula=y ~ x + I(x^2), color = 'black') + 
   xlab('Host functional diversity') + 
   ylab('Symbiont richness')
 p1
 
 p2 <- ggplot(sum_d, aes(x=dmean, y=mean_beta)) + 
-  geom_point(alpha=.6) + 
+  theme_tufte() + 
+  geom_point(alpha=.3, shape = 1) + 
   xlab('Host functional diversity') + 
-  ylab('Mean effect on mortality')
+  ylab('Mean effect on mortality') + 
+  stat_smooth(method=lm, formula=y ~ x + I(x^2), color = 'black')
 p2 
 
 p3 <- ggplot(sum_d, aes(x=dmean, y=mean_breadth)) + 
-  geom_point(alpha=.6) + 
+  theme_tufte() + 
+  geom_point(alpha=.3, shape = 1) + 
   xlab('Host functional diversity') + 
-  ylab('Mean niche breadth')
+  ylab('Mean niche breadth') + 
+  stat_smooth(method=lm, formula=y ~ x + I(x^2), color = 'black')
 p3
 
 ggplot(jt, aes(x=dmean, y=trans)) + 
@@ -236,9 +242,10 @@ ggplot(jt, aes(x=dmean, y=trans)) +
   facet_grid(sigma_bin~beta_bin)
 
 jt$Type <- jt$paras
-jt$`Niche breadlabeller = label_bothth` <- jt$sigma_bin
+jt$`Niche breadth` <- jt$sigma_bin
 p4 <- ggplot(jt, aes(x=dmean, y=trans)) + 
-  geom_point(alpha=.2) +
+  theme_tufte() + 
+  geom_point(alpha=.2, shape = 1) +
   xlab('Host functional diversity') + 
   ylab('Symbiont transmission & colonization') + 
   facet_grid(Type ~ `Niche breadth`, labeller = label_both)

@@ -36,7 +36,7 @@ if (!("res.Rdata" %in% list.files(paste(getwd(), "/R/3-fitness/", sep="")))) {
   eff_diversity <- list()
   trans <- rep(NA, iter)
   beta_d <- rep(NA, iter)
-  
+  pb <- txtProgressBar(max=iter, style=3)
   for (i in 1:iter){
     d <- readRDS(paste(dir, data[i], sep="/"))
     rich_ts[[i]] <- apply(d$n.ind, 1, FUN=function(x) sum(x > 0))
@@ -59,6 +59,7 @@ if (!("res.Rdata" %in% list.files(paste(getwd(), "/R/3-fitness/", sep="")))) {
     trans[i] <- sum(d$ev == 'cntct', na.rm=T) / max(d$t)
     beta_d[i] <- d$pars$beta_d
     rm(d)
+    setTxtProgressBar(pb, i)
   }
   save(list=ls(), file=paste(getwd(), "/R/3-fitness/res.Rdata", sep=""))
 } else {
@@ -79,13 +80,13 @@ mts$functional_diversity <- mdiv$value
 
 mts <- tbl_df(mts)
 
-ggplot(sub_unique(mts, 'host_richness'), 
-       aes(x=t, y=host_richness, group=iteration)) + 
-  geom_line(alpha=.5)
+#ggplot(sub_unique(mts, 'host_richness'), 
+#       aes(x=t, y=host_richness, group=iteration)) + 
+#  geom_line(alpha=.5)
 
-ggplot(sub_unique(mts, 'symbiont_richness'), 
-       aes(x=t, y=symbiont_richness, group=iteration)) + 
-  geom_line(alpha=.5)
+#ggplot(sub_unique(mts, 'symbiont_richness'), 
+#       aes(x=t, y=symbiont_richness, group=iteration)) + 
+#  geom_line(alpha=.5)
 
 up_lim <- 2000
 low_lim <- 100
@@ -110,15 +111,14 @@ library(gtools)
 sum_d$beta_bin <- quantcut(sum_d$beta_d, q=6)
 alph <- .7
 
+library(ggthemes)
+
 p1 <- ggplot(sum_d, aes(x=dmean, y=smean, color=beta_d)) + 
   geom_point() + 
-  #  geom_segment(aes(x=dmean, xend=dmean, y=smean - ssd, yend = smean + ssd), 
-  #               alpha=alph) +
-  #  geom_segment(aes(x=dmean - dsd, xend=dmean + dsd, y=smean, yend=smean), 
-  #               alpha=alph) +
+  theme_tufte() + 
   xlab('Host functional diversity') + 
   ylab('Symbiont richness') + 
-  scale_color_gradientn(colours=rainbow(3)) + 
+  scale_color_gradientn(colours=rev(rainbow(3))) + 
   theme(legend.position="none")
 p1 
 
@@ -145,10 +145,11 @@ ggplot(sum_d, aes(x=dmean, y=smean, color=beta_bin)) +
 
 
 p2 <- ggplot(sum_d, aes(x=dmean, y=trans, color=beta_d)) + 
+  theme_tufte() + 
   geom_point(alpha=1) + 
   xlab('Host functional diversity') + 
   ylab('Transmission rate') + 
-  scale_color_gradientn(colours=rainbow(3), 
+  scale_color_gradientn(colours=rev(rainbow(3)), 
                         name=expression(beta[d]))
 p2 
 
@@ -162,8 +163,8 @@ ggplot(sum_d, aes(x=dmean, y=cor_div, color=beta_d)) +
   geom_point(alpha=alph) + 
   xlab('Functional diversity') + 
   ylab('Correlation: host and symbiont richness') + 
-  geom_abline(yintercept=0, slope=0, linetype='dashed') + 
-  scale_color_gradientn(colours=rainbow(3))
+  geom_abline(intercept=0, slope=0, linetype='dashed') + 
+  scale_color_gradientn(colours=rev(rainbow(3)))
 
 library(gridExtra)
 library(grid)
