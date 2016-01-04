@@ -39,10 +39,12 @@ These results are potentially useful as a step toward a more unified community e
 \end{abstract}
 
 \section*{Introduction}
+%I like this intro paragraph, but I think it actually limits the scope by referencing microbial data sets. I think we could use this as an example, but really talk about regional patterns of symbiont community composition more broadly. I'll try...
+
 
 Recent sequencing technologies have increased our capacity to collect community-wide microbial data. 
-This has motivated calls to develop theoretical frameworks that explain microbial diversity, borrowing theory developed for free-living species \citep{Prosser2007}. 
-Simultaneously, considerable effort has been invested in developing theory that explicitly links free-living diversity to parasitic diversity to understand how host diversity affects disease risk \citep{Dobson2004a, Roche2012, Joseph2013a, Mihaljevic2014}. 
+This has motivated calls to develop theoretical frameworks that explain microbial diversity, borrowing theory developed for free-living species \citep{Prosser2007} %Fierer_etal_2012_AREE, Costello_etal_2012_Science. 
+Simultaneously, considerable effort has been invested in developing theory that explicitly links free-living diversity to pathogen transmission dynamics to understand how host diversity affects disease risk \citep{Dobson2004a, Roche2012, Joseph2013a, Mihaljevic2014}. 
 Both microbial ecologists and disease ecologists have a shared interest in understanding the relationships between free-living and microbial diversity, but there has been little synthesis between these two camps on this topic. 
 Here, we borrow from models of free-living diversity to construct a general model to explore how host diversity affects the transmission and diversity of parasites, mutualists, and commensal symbionts.
 
@@ -59,19 +61,19 @@ Central to this effort is an exploration of how host functional diversity might 
 
 \section*{Methods}
 
-We developed a stochastic continuous-time agent-based model for the dynamics of host-symbiont communities in local habitat patches that are made up of a finite number of cells $C$ that may be occupied by hosts. 
-The local habitat patches are all considered to be equivalent with respect to host colonization, reproduction, and death, which occur with rates $c$, $r$, and $d$, respectively. 
-Multiple host species $h=1, ..., H$ exist within a regional pool, and each patch experiences a constant rate of host colonization $c$, which is equal for all host species, and there is no displacement of occupying hosts by colonizing hosts. 
-Hosts vary in traits that are relevant to symbiont infection, but the communities are otherwise neutral, in that all host species have equal colonization, reproduction, and death rates. 
-Once a host colonizes a patch, it then has some rate of reproduction and of death that is constant among host species.
-Offspring attempt to disperse to a random habitat patch, and if it is unnoccupied, they successfully colonize.
+We developed a stochastic, continuous-time, agent-based model for the dynamics of host-symbiont communities.  In the model, a host community resides in a habitat patch that is divided into a finite number of cells $C$, i.e. micro-sites, in which each cell can be occupied by a single host individual.
+Within the habitat patch, host colonization, reproduction, and death occur with rates $c$, $r$, and $d$, respectively, which are constant across model realizations.
+Multiple host species $h=1, ..., H$ exist within a regional pool, and the patch experiences a constant rate of host colonization $c$, which is equal for all host species, and there is no displacement of occupying hosts by colonizing hosts. 
+Host species vary in traits that are relevant to symbiont infection, but the communities are otherwise neutral, in that all host species have equal colonization, reproduction, and death rates. 
+Once a host colonizes a cell, it then has some rate of reproduction and of death that is constant among host species.
+Offspring attempt to disperse to a random habitat patch cell, and if it is unnoccupied, they successfully colonize.
 
 Multiple types (species) of symbionts occur in the regional pool and attempt to colonize host individuals with a constant rate $r_s$. 
 Host species vary in traits relevant to symbiont establishment probability. 
-We assume for simplicity that this variation is unidimensional, as would be the case if there were one primary niche axis for the symbionts, e.g. pH of the host gut. 
+We assume for simplicity that this variation is unidimensional, as would be the case if there were one primary niche axis for the symbionts, e.g. pH of the host gut.
 Symbiont niches are represented as univariate Gaussian functions with niche optima and breadths (means and variances, respectively), such that the probability of successful establishment $p_e$ on an individual host is a function of the host's value along the niche axis (Figure \ref{fig:niche}). 
-Symbionts have the potential to establish when a susceptible host contacts an infected host, or when a symbiont from the regional pool attempts to colonize a susceptible host in a local community.
-Each symbiont in the regional pool has the same probability of colonizing across the range of possible host conditions as a result of adjusting the niche functions of symbiont species with niche optima near the boundaries of  the niche space of the regional pool \citep{Allouche2012}.
+Symbionts have the potential to establish when a susceptible host contacts an infected host, or when a symbiont from the regional pool attempts to colonize a susceptible host in the habitat patch.
+Each symbiont in the regional pool has the same total probability of colonizing across the range of possible host conditions as a result of adjusting the niche functions of symbiont species with niche optima near the boundaries of  the niche space of the regional pool \citep{Allouche2012}.
  
 Every individual host has some constant probability of a symbiont from the regional pool attempting to infect, with an infection establishment probability $p_e$ from the symbiont niche function. 
 If a symbiont successfully colonizes a host, it becomes part of the local community and can either be extirpated through host recovery or persist by transmitting to other hosts (Figure 2). 
@@ -91,14 +93,14 @@ We were interested broadly in the effect of host functional diversity on symbion
 To vary host functional diversity, we specified a range of within-host environmental conditions and uniformly simulated values bounded within this range for each host species, and assigned these values to host species in the regional pool. 
 The realized functional diversity within a local community is the range of values represented by host species that occupy the local community, and can thus vary across a simulated time series as new host species colonize or are extirpated. 
 We monitored the number of symbiont transmission events and symbiont species richness throughout each simulated time series. 
-In order to compare values across many simulated time series, we restrict our calculations of mean host functional diversity, symbiont transmission, etc. to common periods in which the quantities have stabilized, rather than including the entire time series from the initial unoccupied state, to the colonization stage. 
+In order to compare values across many simulated time series, we restrict our calculations of mean host functional diversity, symbiont transmission, etc. to common periods in which the quantities have stabilized, rather than including the entire time series from the initial unoccupied state, to the colonization stage. %Worth defining how you calculated transmission rate exactly.
 
 In addition to investigating the effect of host functional diversity on symbiont transmission and richness, we explored the effect of symbiont niche breadth ($\sigma$ in Figure \ref{fig:niche}), and the effect of infection on host fitness, described below. 
-These questions lead to six different simulation experiments. 
+These questions lead to six different simulation experiments. %It might be worth ordering these a bit more logically. For instance, the second and fourth experiments seem related, (and could therefore be second and third) and same with the third and fifth.
 The first explores the effect of host functional diversity on transmission and symbiont richness when all symbionts are functionally equivalent and commensal.
 The second allows symbiont niche width to vary among simulated realizations, but assumes that the niche width of all symbionts is equal within a simulation run. 
 The third varies the effect of symbiont infection on host survival, varying across simulation runs but equal among symbionts within a run. 
-The fourth varies symbiont niche width within and across simulation runs so that the regional pool of symbionts includes a combination of specialists and generalists.
+The fourth varies symbiont niche width within and across simulation runs so that the regional pool of symbionts includes a spectrum from specialists to broad generalists.
 The fifth varies symbiont fitness effects within and across runs so that the regional pool includes parasites and mutualists.
 The sixth and final experiment allows both niche width and fitness effects to vary within and across runs so that the regional pool of symbionts includes a range of specialist and generalist parasites and mutualists. 
 All code to replicate the analysis and manuscript is publicly available at \url{https://github.com/mbjoseph/abm}.
@@ -106,29 +108,29 @@ All code to replicate the analysis and manuscript is publicly available at \url{
 \section*{Results}
 
 In our first experiment all symbionts were commensal and had equal niche widths. 
-Across 1000 simulated local host communities, host functional diversity decreased symbiont transmission while increasing symbiont richness (Figure \ref{f2}). 
+Across 1000 simulated local host communities, host functional diversity increased symbiont richness, but simultaneously decreased symbiont transmission (Figure \ref{f2}). 
 Symbiont diversity increased non-linearly with host functional diversity, with the fastest increases occurring at low levels of host functional diversity. 
-While symbiont transmission was lower on average in communities with high symbiont diversity, there was one instance in a low-diversity host community in which no symbionts could colonize, because the range of host resources that were available in the local community was outside the optimal niche space of the symbionts in the regional pool. 
-In other words, symbionts attempting to colonize had very low probabilities of establishment in the hosts, such that across the range of timesteps, no symbionts succeeded in colonizing the local community. 
+While symbiont transmission was lower on average in communities with high symbiont diversity and high host functional diversity, there was one instance in a low-diversity host community in which no symbionts could colonize, because the range of host resources that were available in the local community was outside the optimal niche space of the symbionts in the regional pool. 
+In other words, symbionts attempting to colonize had very low probabilities of establishment in the hosts, such that across the range of timesteps, no symbionts succeeded in colonizing the local community.  
 
-In our second experiment where the niche width of symbionts varied among simulations but was constant among species within each simulation, host diversity still increased symbiont richness and decreased transmission, but these relationships were strongly moderated by symbiont niche width (Figure \ref{f3}). 
+In our second experiment, where the niche width of symbionts varied among simulations but was constant among species within each simulation, host diversity still increased symbiont richness and decreased transmission, but these relationships were strongly moderated by symbiont niche width (Figure \ref{f3}). 
 The increases in symbiont richness with host richness were still non-linear, but they shifted from being concave down to concave up as symbionts became more generalized. 
 Transmission consistently decreased as host communities became more functionally diverse, but as symbiont niche width increased, there were fewer outlier communities with extremely low transmission, because it becomes less likely that any particular host community will have a range of resources available that cannot be exploited by symbionts in the regional pool because of a mismatch with their niche space.
 
-In our third experiment where the fitness consequences of infection varied among simulations, host diversity still increased symbiont richness and reduced transmission, but parasites had lower richness and transmission on average compared to mutualist and commensal symbionts (Figure \ref{f4}). 
+In our third experiment, where the fitness consequences of infection varied among simulations, host diversity still increased symbiont richness and reduced transmission, but parasites had lower richness and transmission on average compared to mutualist and commensal symbionts (Figure \ref{f4}). 
 This is likely because parasites restrict their own transmission by killing hosts, making it more difficult to persist in a local host community. 
 As a result, richer host communities still can be colonized by more parasitic symbiont species, but these communities will have more depauperate symbiont communities relative to communities comprised of less virulent symbionts. 
 
 When symbiont niche width varied within communities, host diversity still increased symbiont richness, but the effects of host diversity on symbiont transmission were more subtle (Figure \ref{f5}). 
 Specialist symbionts had the highest transmission rates in low-diversity communities, but had relatively low transmission in more diverse host communities. 
-Generalist symbionts actually had higher transmission in the high diversity host communities, and lower transmission in less diverse host communities, consistent with the idea that specialist symbionts can outcompete generalists. 
+Generalist symbionts actually had higher transmission in the high diversity host communities, and lower transmission in less diverse host communities, consistent with the idea that specialist symbionts can outcompete generalists.
 In addition, mean niche breadth in the symbiont community increased with host functional diversity, such that diverse host communities contained more generalist symbionts than low diversity host communities. 
 
 When symbionts varied in fitness effects, host diversity increased symbiont richness, and reduced transmission, but the reduction in transmission was more pronounced for parasitic than mutualistic symbionts (Figure \ref{f6}). 
-Interestingly, extremely mutualistic symbionts had a lower peak transmission in low diversity communities than moderately mutualistic symbionts, because host were so long-lived that the majority habitat patches in the lowest diversity communities were occupied by extremely long-lived, infected hosts, such that there were fewer susceptible hosts available for transmission. 
+Interestingly, extremely mutualistic symbionts had a lower peak transmission in low diversity communities than moderately mutualistic symbionts, because hosts were so long-lived that the majority of habitat patches in the lowest diversity communities were occupied by extremely long-lived, infected hosts, such that there were fewer susceptible hosts available for transmission. 
 There were no clear patterns with the mean fitness effect as a response to host functional diversity. 
 
-When symbionts varied in fitness effects and niche breadth, host diversity still increased symbiont diversity and reduced transmission (Figure \ref{f7}). 
+When symbionts varied in fitness effects and niche breadth, host diversity still increased symbiont diversity and reduced transmission (Figure \ref{f7}). %Check the figure legend for this one. Also for Panel D, you might want to reconsider how you present the comparison between Mutualist and Parasite (the labels on the right are a bit strange) 
 Mutualistic symbionts nearly always had higher transmission than parasitic symbionts, and on average, symbionts in the local communities were mutualistic. 
 Furthermore, low diversity host communities had more specialist symbionts than high diversity communities, which primarily consisted of generalists. 
 Both of these findings are consistent with the component cases when fitness effects and niche breadth are the only varying parameters.
